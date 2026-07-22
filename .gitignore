@@ -50,3 +50,7 @@ Thumbs.db
 web-next/.git_scaffold_backup/
 *.err
 .claude/
+
+# 공개 제외 요청 파일
+docs/audit_lens_ui.html
+감사렌즈_기술산출물_스터디.pdf
