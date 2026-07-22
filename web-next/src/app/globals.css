@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/* 감사렌즈 브랜드 팔레트 — 기존 UI·종합문서와 동일 계열(그린) */
+:root {
+  --green: #0e5c4a;
+  --green-deep: #0a4839;
+  --green-soft: #e7f1ee;
+  --ink: #15211c;
+  --ink-2: #54615b;
+  --line: #cbd3ce;
+  --bg: #f4f7f5;
+  --card: #ffffff;
+  --warn: #b45309;
+  --danger: #b91c1c;
+}
+
+@theme inline {
+  --color-green: var(--green);
+  --color-green-deep: var(--green-deep);
+  --color-green-soft: var(--green-soft);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-line: var(--line);
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+}
+
+/* 원문 하이라이트 */
+mark {
+  background: #fef3c7;
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* 스피너 */
+.spin {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--line);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: sp 0.8s linear infinite;
+  display: inline-block;
+}
+@keyframes sp {
+  to { transform: rotate(360deg); }
+}

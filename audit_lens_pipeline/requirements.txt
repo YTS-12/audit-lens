@@ -1,0 +1,35 @@
+# 감사렌즈 런타임 의존성 (서빙 이미지 = pytorch/pytorch:2.6.0-cuda12.4 베이스)
+# torch는 베이스 이미지가 제공하므로 여기 명시하지 않는다.
+# 버전은 로컬(dart-rag) 검증분에 고정 — 재현성·안정성.
+
+# ── 수집·파싱·공용 ──
+requests>=2.31
+python-dotenv>=1.0
+pydantic>=2.6
+pydantic-settings>=2.2
+tenacity>=8.2
+pandas>=2.2
+lxml>=5.1
+beautifulsoup4>=4.12
+PyYAML>=6.0                 # 온톨로지 YAML 로딩(라우팅 정확도)
+
+# ── LLM ──
+anthropic==0.102.0         # 프롬프트 캐싱(cache_control)·재시도(APIStatusError) 사용
+
+# ── 벡터스토어·정형 DB ──
+opensearch-py==3.2.0
+psycopg[binary]==3.3.4     # libpq 포함(binary)
+
+# ── 임베딩·재랭킹 (BGE-M3 dense + CrossEncoder reranker) ──
+sentence-transformers==5.4.1
+transformers==4.55.4
+tokenizers==0.21.4
+safetensors==0.7.0
+numpy==1.26.4
+
+# ── 서빙 (FastAPI + Uvicorn) ──
+fastapi==0.136.3
+uvicorn==0.46.0
+
+# ── AWS (Secrets Manager 키 로드 — aws_secret_name 설정 시만 사용) ──
+boto3>=1.34

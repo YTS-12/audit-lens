@@ -1,0 +1,52 @@
+# ── 비밀정보 (절대 커밋 금지) ──
+.env
+.env.local
+*.pem
+*.key
+**/terraform.tfstate
+**/terraform.tfstate.*
+**/terraform.tfvars
+**/.terraform/
+.claude/settings.local.json
+
+# ── 개인 문서 ──
+자기소개서*.txt
+*면접대비*.pdf
+*_backup_v*.pdf
+
+# ── 운영 산출물에 인프라 식별자(IP·인스턴스ID) 포함 → 비공개 ──
+감사렌즈_개발_종합문서.pdf
+AWS_AI_Implementation_스터디*.pdf
+
+# ── 데이터 (공시 원문·파싱 청크·임베딩 산출물, 약 5GB) ──
+audit_lens_pipeline/data/
+audit_lens_pipeline/inputs/
+docs/audit_lens_pipeline.zip
+
+# ── 로그 ──
+*.log
+audit_lens_pipeline/_scratch/
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# ── Node / Next.js ──
+node_modules/
+.next/
+out/
+web_next/
+.turbo/
+*.tsbuildinfo
+
+# ── OS ──
+Thumbs.db
+.DS_Store
+
+# 중첩 저장소 백업·기타 로그
+web-next/.git_scaffold_backup/
+*.err
+.claude/

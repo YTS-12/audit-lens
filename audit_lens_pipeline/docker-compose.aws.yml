@@ -1,0 +1,73 @@
+# 단일 EC2 전체 스택 — 앱(GPU) + OpenSearch(nori) + PostgreSQL 한 대에.
+# EC2 stop 시 전부 정지(디스크만 과금), start 시 볼륨 보존돼 그대로 복귀.
+# 실행: docker compose -f docker-compose.aws.yml up -d --build
+# 필요: 같은 폴더에 .env (PG_PASSWORD·ANTHROPIC_API_KEY·OPENDART_API_KEY·KRX_API_KEY)
+services:
+  opensearch:
+    build: { context: ./infra/aws-single, dockerfile: opensearch.Dockerfile } # nori 포함
+    environment:
+      - discovery.type=single-node
+      - DISABLE_SECURITY_PLUGIN=true
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g
+      - bootstrap.memory_lock=true
+      - path.repo=/snap                              # 스냅샷 복원 저장소(로컬 인덱스 이관)
+    ulimits: { memlock: { soft: -1, hard: -1 }, nofile: { soft: 65536, hard: 65536 } }
+    volumes:
+      - osdata:/usr/share/opensearch/data
+      - /home/ubuntu/snap:/snap                      # 전송된 스냅샷 파일
+    restart: always
+
+  postgres:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=auditlens
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+      - POSTGRES_DB=auditlens
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./src/db:/docker-entrypoint-initdb.d:ro   # facts 스키마 자동생성(schema.sql)
+    restart: always
+
+  app:
+    build: { context: ., dockerfile: Dockerfile }  # GPU 이미지(BGE-M3+재랭커+serve)
+    depends_on: [opensearch, postgres]
+    ports: ["8000:8000"]
+    env_file: .env                                  # API 키·PG_PASSWORD 주입
+    environment:
+      - OPENSEARCH_HOST=opensearch
+      - OPENSEARCH_PORT=9200
+      - OPENSEARCH_USE_SSL=false
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_DB=auditlens
+      - PG_USER=auditlens
+      - EMBEDDING_DEVICE=cpu                        # 서빙=CPU 인스턴스(t3.xlarge, 비용 1/3). GPU 작업 시 -f docker-compose.gpu.yml 추가
+      - RERANKER_DEVICE=cpu                         # 재랭커 CPU
+      - SSL_CERTFILE=/app/certs/cert.pem            # TLS(자기서명) — HTTPS 서빙, 전송 암호화
+      - SSL_KEYFILE=/app/certs/key.pem
+      - AWS_SECRET_NAME=audit-lens/prod             # Secrets Manager(§11.2) — 부팅 시 키 로드(.env는 폴백)
+      - AUDIT_LOG_PATH=/app/data/audit.log          # 접근/질의 감사로그(호스트 data에 보존)
+    volumes:
+      - /home/ubuntu/audit_lens/data:/app/data      # universe.csv·감사로그 등(스냅샷이라 parsed 불필요)
+      - certdata:/app/certs                         # 자기서명 인증서 보존(재시작해도 동일 cert)
+      - /home/ubuntu/audit_lens/web_next:/app/web_next  # Next 정적 UI — scp만으로 갱신(재빌드 불필요)
+    # GPU 예약은 docker-compose.gpu.yml 오버라이드로 분리(재임베딩 등 GPU 작업 시 g4dn 타입 + -f 두 개로 기동)
+    restart: always
+
+  caddy:                                            # 정식 TLS(Let's Encrypt 자동) — https://www.cpa-yts.p-e.kr
+    image: caddy:2
+    ports: ["80:80", "443:443"]
+    volumes:
+      - /home/ubuntu/audit_lens/infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data                             # 인증서 보존(재시작에도 재발급 없음)
+      - caddyconfig:/config
+    depends_on: [app]
+    restart: always
+
+volumes:
+  osdata: {}
+  pgdata: {}
+  certdata: {}
+  caddydata: {}
+  caddyconfig: {}

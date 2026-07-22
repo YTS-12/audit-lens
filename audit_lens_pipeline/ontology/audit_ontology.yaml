@@ -1,0 +1,1479 @@
+# 감사렌즈 회계·감사 온톨로지 v2 (경량 통제 어휘)
+# v1 + 사용자 제공 확장(2026-07-09): 동의어 대폭 보강 · 그룹/값동의어 확장 · 회계법인 표기 ·
+#   domain_rules(K-IFRS 판단규칙) · account_hierarchy(계정 계층) · kam_topics(KAM 주제 택소노미) ·
+#   doc_absence/presence_markers(문서측 표현 — 질의측 negation/open_markers와 구분)
+# 주의: industries.sector 는 반드시 universe.csv 의 KRX sector 실명과 일치해야 함(필터 정확성).
+version: v2
+concepts:
+  감사의견_유형:
+    synonyms:
+    - 감사의견
+    - 감사 의견
+    - audit opinion
+    - 외부감사 의견
+    - 감사인의 의견
+    - 감사보고서 의견
+    - 독립된 감사인의 감사의견
+    - auditor opinion
+    - opinion on the financial statements
+    - 의견문단
+    - 의견 단락
+    - 적정의견
+    - 한정의견
+    - 부적정의견
+    - 의견거절
+    - 무한정의견
+    - unmodified opinion
+    - qualified opinion
+    - adverse opinion
+    - disclaimer of opinion
+    - 변형의견
+    - modified opinion
+    ksa:
+    - 700
+    - 705
+    - 706
+    values:
+    - 적정
+    - 한정
+    - 부적정
+    - 의견거절
+    positive:
+    - 적정
+    groups:
+      비변형의견:
+      - 적정
+      변형의견:
+      - 한정
+      - 부적정
+      - 의견거절
+      부정형스크리닝:
+      - 한정
+      - 부적정
+      - 의견거절
+    value_synonyms:
+      적정:
+      - 적정
+      - 적정의견
+      - 적정 의견
+      - 무한정의견
+      - 무한정 의견
+      - 비변형의견
+      - unmodified
+      - unmodified opinion
+      - unqualified opinion
+      한정:
+      - 한정
+      - 한정의견
+      - 한정 의견
+      - qualified
+      - qualified opinion
+      부적정:
+      - 부적정
+      - 부적정의견
+      - 부적정 의견
+      - adverse
+      - adverse opinion
+      의견거절:
+      - 의견거절
+      - 의견 거절
+      - 감사의견 거절
+      - disclaimer
+      - disclaimer of opinion
+  핵심감사사항:
+    synonyms:
+    - 핵심감사사항
+    - KAM
+    - key audit matters
+    - 주요 감사사항
+    - 핵심 감사사항
+    - key audit matter
+    - 감사상 핵심사항
+    - 핵심감사문제
+    - 감사에서 가장 유의적인 사항
+    - 가장 유의적인 감사사항
+    - 핵심감사사항 문단
+    ksa:
+    - 701
+  계속기업_불확실성:
+    synonyms:
+    - 계속기업
+    - going concern
+    - 계속기업 불확실성
+    - 존속능력
+    - 존속 가능
+    - 계속기업 가정
+    - 계속기업 의문
+    - 계속기업가정
+    - 계속기업 관련 중요한 불확실성
+    - 계속기업 관련 유의적 불확실성
+    - 중요한 불확실성
+    - 유의적 불확실성
+    - material uncertainty related to going concern
+    - going-concern
+    - substantial doubt
+    - 계속기업 전제
+    - 계속기업으로서의 존속능력
+    - 기업존속능력
+    ksa:
+    - 570
+    - 700
+    - 706
+    value_synonyms:
+      있음:
+      - 있음
+      - 계속기업 관련 중요한 불확실성이 존재
+      - 계속기업으로서의 존속능력에 유의적 의문
+      - material uncertainty exists
+      - substantial doubt exists
+      없음:
+      - 없음
+      - 중요한 불확실성은 발견되지 않았습니다
+      - 유의적 불확실성은 없습니다
+      - no material uncertainty
+  감가상각_변경:
+    synonyms:
+    - 감가상각방법 변경
+    - 내용연수 변경
+    - 감가상각 변경
+    - 상각방법 변경
+    - 잔존가치 변경
+    - 감가상각 방법 변경
+    - 상각 방법 변경
+    - depreciation method change
+    - change in depreciation method
+    - 내용연수 조정
+    - 추정내용연수 변경
+    - 잔존가액 변경
+    - 정액법에서 정률법
+    - 정률법에서 정액법
+    - useful life change
+    - useful lives revised
+    - residual value revised
+    - 감가상각기간 변경
+    - 상각기간 변경
+    - 유형자산 상각방법
+    - 유형자산 내용연수
+    related:
+    - 회계추정_변경
+    ksa:
+    - 540
+    kifrs:
+    - 1008
+    - 1016
+    - 1038
+    values:
+    - 상각방법변경
+    - 내용연수변경
+    - 잔존가치변경
+    groups:
+      회계추정변경:
+      - 상각방법변경
+      - 내용연수변경
+      - 잔존가치변경
+    value_synonyms:
+      상각방법변경:
+      - 상각방법변경
+      - 감가상각방법 변경
+      - 상각방법 변경
+      - 정액법에서 정률법
+      - 정률법에서 정액법
+      - depreciation method changed
+      내용연수변경:
+      - 내용연수변경
+      - 내용연수 변경
+      - 내용연수 조정
+      - 추정내용연수 변경
+      - useful life revised
+      잔존가치변경:
+      - 잔존가치변경
+      - 잔존가치 변경
+      - 잔존가액 변경
+      - residual value revised
+  회계정책_변경:
+    synonyms:
+    - 회계정책 변경
+    - 회계기준 변경
+    - accounting policy change
+    - 회계 정책 변경
+    - change in accounting policy
+    - 기준서 최초 적용
+    - 회계처리기준 변경
+    - 자발적 회계정책 변경
+    - 소급적용
+    - retrospective application
+    - 전기재무제표 재작성
+    - 재분류
+    ksa:
+    - 540
+    - 708
+    kifrs:
+    - 1008
+    value_synonyms:
+      소급적용:
+      - 소급적용
+      - 소급 적용
+      - 소급하여 적용
+      - retrospective application
+      전진적용:
+      - 전진적용
+      - 전진 적용
+      - 전진적으로 적용
+      - prospective application
+  회계추정_변경:
+    synonyms:
+    - 회계추정 변경
+    - 추정의 변경
+    - accounting estimate change
+    - 회계추정의 변경
+    - change in accounting estimate
+    - 충당부채 추정 변경
+    - 대손충당금 추정 변경
+    - 손상차손 추정 변경
+    - 공정가치 추정 변경
+    - 진행률 추정 변경
+    - 총예정원가 변경
+    - 총계약원가 추정 변경
+    - 전진적용
+    - 경영진의 추정
+    - 유의적인 회계추정
+    ksa:
+    - 540
+    kifrs:
+    - 1008
+    groups:
+      주요추정항목:
+      - 대손충당금
+      - 재고자산평가충당금
+      - 손상차손
+      - 충당부채
+      - 공정가치
+      - 총예정원가
+      - 내용연수
+  소송_우발부채:
+    synonyms:
+    - 소송
+    - 우발부채
+    - 우발채무
+    - 계류 중인 소송
+    - 손해배상
+    - contingent liability
+    - 소송사건
+    - 계류중인 소송
+    - 진행중인 소송
+    - 법적분쟁
+    - 법률분쟁
+    - 클레임
+    - 손해배상청구
+    - 우발 부채
+    - litigation
+    - lawsuit
+    - legal proceedings
+    - 법적 절차
+    - 소송충당부채
+    - 소송손실충당부채
+    - 미결소송
+    - 보증채무
+    - 지급보증
+    - 우발손실
+    ksa:
+    - 501
+    - 540
+    kifrs:
+    - 1037
+    values:
+    - 충당부채인식
+    - 우발부채공시
+    groups:
+      회계처리:
+      - 충당부채인식
+      - 우발부채공시
+    value_synonyms:
+      충당부채인식:
+      - 충당부채인식
+      - 충당부채를 인식
+      - 소송충당부채
+      - provision recognized
+      우발부채공시:
+      - 우발부채공시
+      - 우발부채로 공시
+      - disclosed as contingent liability
+  특수관계자_거래:
+    synonyms:
+    - 특수관계자
+    - 특수관계자 거래
+    - related party
+    - 특수관계자와의 거래
+    - 특수 관계자 거래
+    - 특수관계인 거래
+    - related party transactions
+    - related parties
+    - 관계기업 거래
+    - 종속기업 거래
+    - 공동기업 거래
+    - 주요 경영진 보상
+    - 주요경영진보상
+    - 임원 보수
+    - 대주주 거래
+    - 최대주주 거래
+    - 지배기업 거래
+    - 내부거래
+    - 특수관계자 채권채무
+    ksa:
+    - 550
+    kifrs:
+    - 1024
+    values:
+    - 매출매입
+    - 채권채무
+    - 자금거래
+    - 지급보증
+    - 주요경영진보상
+    groups:
+      거래유형:
+      - 매출매입
+      - 채권채무
+      - 자금거래
+      - 지급보증
+      - 주요경영진보상
+    value_synonyms:
+      매출매입:
+      - 매출매입
+      - 매출 및 매입
+      - 재화와 용역의 거래
+      - sales and purchases
+      채권채무:
+      - 채권채무
+      - 채권 채무
+      - 미수금 미지급금
+      - receivables and payables
+      자금거래:
+      - 자금거래
+      - 대여금
+      - 차입금
+      - 자금 대여
+      - loans
+      - borrowings
+      지급보증:
+      - 지급보증
+      - 담보제공
+      - guarantees
+      주요경영진보상:
+      - 주요경영진보상
+      - 주요 경영진 보상
+      - 임원 보수
+      - key management compensation
+  재고자산_평가방법:
+    synonyms:
+    - 재고자산 평가방법
+    - 재고 평가
+    - 단위원가 결정
+    - 재고자산 원가
+    - 재고자산 평가 방법
+    - 재고자산 원가흐름
+    - 재고자산 단가산정
+    - 재고자산 단위원가
+    - inventory costing method
+    - inventory valuation method
+    - 원가법
+    - 저가법
+    - 순실현가능가치
+    - NRV
+    - net realizable value
+    - 재고평가충당금
+    - 재고자산평가손실
+    values:
+    - 선입선출
+    - 후입선출
+    - 총평균
+    - 이동평균
+    - 개별법
+    - 저가법
+    value_synonyms:
+      선입선출:
+      - 선입선출
+      - 선입선출법
+      - FIFO
+      - first-in first-out
+      - first in first out
+      총평균:
+      - 총평균
+      - 총평균법
+      - 가중평균법
+      - weighted average
+      - weighted-average cost
+      이동평균:
+      - 이동평균
+      - 이동평균법
+      - moving average
+      - moving-average cost
+      개별법:
+      - 개별법
+      - 개별원가법
+      - specific identification
+      - specific cost
+      저가법:
+      - 저가법
+      - 원가와 순실현가능가치 중 낮은 금액
+      - lower of cost and net realizable value
+      - LCNRV
+    ksa:
+    - 501
+    - 540
+    kifrs:
+    - 1002
+    groups:
+      원가흐름가정:
+      - 선입선출
+      - 총평균
+      - 이동평균
+      - 개별법
+      평가손실:
+      - 저가법
+  수익인식_정책:
+    synonyms:
+    - 수익인식
+    - 수익 인식
+    - 수익인식 정책
+    - revenue recognition
+    - 수익인식정책
+    - 매출인식
+    - 매출 인식
+    - revenue recognition policy
+    - 고객과의 계약에서 생기는 수익
+    - contracts with customers
+    - 5단계 모형
+    - five-step model
+    - 수행의무
+    - performance obligation
+    - 거래가격
+    - transaction price
+    - 공사진행률
+    - 총예정원가
+    value_synonyms:
+      진행기준:
+      - 진행기준
+      - 기간에 걸쳐
+      - 진행률
+      - 투입법
+      - 산출법
+      - 진행 기준
+      - 진행률 기준
+      - 기간에 걸쳐 인식
+      - over time
+      - percentage of completion
+      - POC
+      인도기준:
+      - 인도기준
+      - 한 시점
+      - 인도시점
+      - 재화의 판매
+      - 인도 기준
+      - 검수기준
+      - 검수 기준
+      - 한 시점에 인식
+      - 고객에게 이전되는 시점
+      - point in time
+      - point-in-time recognition
+      - delivery basis
+      - acceptance basis
+      투입법:
+      - 투입법
+      - 원가기준 투입법
+      - 발생원가 기준
+      - input method
+      - cost-to-cost method
+      산출법:
+      - 산출법
+      - 산출물 기준
+      - 이정표 기준
+      - output method
+      - milestone method
+    ksa:
+    - 240
+    - 315
+    - 330
+    - 540
+    kifrs:
+    - 1115
+    values:
+    - 진행기준
+    - 인도기준
+    - 투입법
+    - 산출법
+    groups:
+      기간에걸쳐인식:
+      - 진행기준
+      - 투입법
+      - 산출법
+      한시점인식:
+      - 인도기준
+      진행률측정:
+      - 투입법
+      - 산출법
+  감사인_보수:
+    synonyms:
+    - 감사인
+    - 외부감사인
+    - 회계감사인
+    - 회계법인
+    - 감사보수
+    - auditor
+    - 감사 보수
+    - 외부감사 보수
+    - 감사용역 보수
+    - 감사계약 보수
+    - audit fee
+    - audit fees
+    - auditor remuneration
+    - 비감사용역 보수
+    - non-audit fee
+    - 감사시간
+    - 감사투입시간
+    - 감사계약 체결
+    groups:
+      빅4:
+      - 삼일
+      - 삼정
+      - 안진
+      - 한영
+      비빅4:
+      - 대주
+      - 삼덕
+      - 한울
+      - 신한
+      - 이촌
+      - 안세
+      - 정진
+      - 우리
+      - 서현
+    ksa:
+    - 210
+    - 220
+    - 260
+    value_synonyms:
+      삼일:
+      - 삼일
+      - 삼일회계법인
+      - 삼일PwC
+      - PwC
+      - PricewaterhouseCoopers
+      - Samil PwC
+      삼정:
+      - 삼정
+      - 삼정회계법인
+      - 삼정KPMG
+      - KPMG
+      - Samjong KPMG
+      안진:
+      - 안진
+      - 안진회계법인
+      - 딜로이트안진
+      - Deloitte
+      - Deloitte Anjin
+      한영:
+      - 한영
+      - 한영회계법인
+      - EY한영
+      - EY
+      - Ernst & Young
+      - Ernst and Young
+      빅4:
+      - 빅4
+      - Big4
+      - Big 4
+      - 빅포
+      - 4대 회계법인
+      감사보수:
+      - 감사보수
+      - 감사 보수
+      - 감사용역 보수
+      - 회계감사 보수
+      - audit fee
+      - audit fees
+      비감사보수:
+      - 비감사보수
+      - 비감사 보수
+      - 비감사용역 보수
+      - non-audit fee
+      - non-audit services fee
+  내부회계관리제도_검토의견:
+    synonyms:
+    - 내부회계관리제도
+    - 내부회계
+    - ICFR
+    - 내부통제
+    - internal control
+    - 내부회계관리제도 검토의견
+    - 내부회계관리제도 감사의견
+    - 내부회계관리제도 검토보고서
+    - internal control over financial reporting
+    - 중요한 취약점
+    - 유의한 미비점
+    - material weakness
+    - significant deficiency
+    - 내부회계 검토
+    - 내부회계 감사
+    ksa:
+    - 265
+    - 315
+    - 330
+    values:
+    - 적정
+    - 비적정
+    - 중요한취약점
+    - 유의한미비점
+    positive:
+    - 적정
+    groups:
+      부정:
+      - 비적정
+      - 중요한취약점
+      - 유의한미비점
+    value_synonyms:
+      적정:
+      - 적정
+      - 중요한 취약점이 발견되지 않았습니다
+      - 효과적으로 설계 및 운영
+      - no material weakness
+      - effective internal control
+      비적정:
+      - 비적정
+      - 효과적이지 않음
+      - ineffective
+      중요한취약점:
+      - 중요한취약점
+      - 중요한 취약점
+      - material weakness
+      유의한미비점:
+      - 유의한미비점
+      - 유의한 미비점
+      - significant deficiency
+industries:
+  건설:
+    sector: 건설
+    aliases:
+    - 건설업
+    - construction
+    - 시공
+    - 토목
+    - 건축
+    - 주택건설
+    - 플랜트
+    - EPC
+  화학:
+    sector: 화학
+    aliases:
+    - 화학업
+    - 정유
+    - 석유화학
+    - 정밀화학
+    - 기초화학
+    - 합성수지
+    - chemical
+    - 화장품
+  제약:
+    sector: 제약
+    aliases:
+    - 의약품
+    - 바이오
+    - 제약업
+    - 헬스케어
+    - 신약
+    - 바이오시밀러
+    - 신약개발
+    - CRO
+    - CMO
+    - CDMO
+    - pharmaceutical
+    - biotechnology
+  금속:
+    sector: 금속
+    aliases:
+    - 철강
+    - 금속업
+    - 비철금속
+    - 강철
+    - 제강
+    - 냉연
+    - 열연
+    - 후판
+    - steel
+  비금속:
+    sector: 비금속
+    aliases:
+    - 시멘트
+    - 요업
+    - 건설자재
+    - 레미콘
+    - 골재
+    - 건자재
+    - building materials
+  운송장비:
+    sector: 운송장비·부품
+    aliases:
+    - 운수장비
+    - 자동차
+    - 완성차
+    - 조선
+    - 자동차부품
+    - 전기차
+    - EV
+    - 모빌리티
+    - 전장부품
+    - 타이어
+    - 선박
+    - 상선
+    - LNG선
+    - 컨테이너선
+    - 해양플랜트
+    - shipbuilding
+    - 방산
+    - 방위산업
+    - 항공우주
+    - 국방
+    - 완성차부품
+  전기전자:
+    sector: 전기·전자
+    aliases:
+    - 전기전자
+    - 반도체
+    - 디스플레이
+    - 가전
+    - 메모리
+    - 파운드리
+    - 팹리스
+    - OLED
+    - LCD
+    - 패널
+    - 전자부품
+    - PCB
+    - 카메라모듈
+    - 2차전지
+    - 이차전지
+    - 배터리
+    - 양극재
+    - 음극재
+    - 분리막
+    - 전해액
+    - 전기제품
+    - semiconductor
+  기타금융:
+    sector: 기타금융
+    aliases:
+    - 금융
+    - 금융업
+    - 지주
+    - 캐피탈
+    - 카드
+    - 여신전문금융
+    - 할부금융
+    - 신용카드
+    - consumer finance
+  은행:
+    sector: 은행
+    aliases:
+    - 은행업
+    - 금융지주
+    - bank
+  증권:
+    sector: 증권
+    aliases:
+    - 증권사
+  보험:
+    sector: 보험
+    aliases:
+    - 보험사
+    - 생명보험
+    - 손해보험
+  유통:
+    sector: 유통
+    aliases:
+    - 소매
+    - 도소매
+    - 백화점
+    - 홈쇼핑
+    - 대형마트
+    - 편의점
+    - 이커머스
+    - retail
+  운송창고:
+    sector: 운송·창고
+    aliases:
+    - 물류
+    - 해운
+    - 항공
+    - 택배
+    - 항공운송
+    - 해상운송
+    - 육상운송
+    - shipping
+    - logistics
+  음식료:
+    sector: 음식료·담배
+    aliases:
+    - 식품
+    - 음식료
+    - 담배
+    - 식음료
+    - 가공식품
+    - food and beverage
+  기계장비:
+    sector: 기계·장비
+    aliases:
+    - 기계
+    - 장비
+    - 산업기계
+    - 공작기계
+    - 건설기계
+    - 농기계
+    - machinery
+  섬유의류:
+    sector: 섬유·의류
+    aliases:
+    - 섬유
+    - 의류
+    - 패션
+    - 어패럴
+    - 신발
+    - 호화품
+    - apparel
+  종이목재:
+    sector: 종이·목재
+    aliases:
+    - 제지
+    - 목재
+    - 펄프
+  전기가스:
+    sector: 전기·가스
+    aliases:
+    - 유틸리티
+    - 전력
+    - 가스
+    - LNG
+    - 발전
+    - 신재생
+    - 태양광
+    - 풍력
+    - 수소
+    - 지역난방
+    - 발전사
+    - utilities
+  IT서비스:
+    sector: IT 서비스
+    aliases:
+    - IT
+    - 소프트웨어
+    - 인터넷
+    - 플랫폼
+    - SaaS
+    - SI
+    - 시스템통합
+    - 포털
+    - 온라인서비스
+    - 디지털플랫폼
+    - SW
+  일반서비스:
+    sector: 일반서비스
+    aliases:
+    - 서비스
+    - 호텔
+    - 레저
+    - 카지노
+    - 여행
+    - 교육
+    - 학원
+    - 에듀테크
+  오락문화:
+    sector: 오락·문화
+    aliases:
+    - 엔터테인먼트
+    - 게임
+    - 미디어
+    - 콘텐츠
+    - 방송
+    - 광고
+    - 영화
+    - 음악
+    - 엔터
+  의료정밀:
+    sector: 의료·정밀기기
+    aliases:
+    - 의료기기
+    - 정밀기기
+    - 진단기기
+    - 체외진단
+    - 임플란트
+    - medical devices
+  통신:
+    sector: 통신
+    aliases:
+    - 통신업
+    - 이동통신
+    - 유선통신
+    - 5G
+    - telecom
+    - 통신서비스
+  부동산:
+    sector: 부동산
+    aliases:
+    - 리츠
+    - 부동산업
+    - 부동산투자
+    - REITs
+    - real estate
+  기타제조:
+    sector: 기타제조
+    aliases: []
+  농림어업:
+    sector: 농업, 임업 및 어업
+    aliases:
+    - 농업
+    - 어업
+    - 임업
+negation_markers:
+- 아닌
+- 아니
+- 제외
+- 빼고
+- 외의
+- 않은
+- 이외
+open_markers:
+- 사례
+- 경향
+- 영향
+- 어떻게
+- 왜
+- 방식
+- 트렌드
+- 추세
+doc_absence_markers:
+- 없음
+- 없습니다
+- 해당사항 없음
+- 해당 사항 없음
+- 해당사항이 없습니다
+- 존재하지 않습니다
+- 발생하지 않았습니다
+- 발견되지 않았습니다
+- 식별되지 않았습니다
+- 인식하지 않았습니다
+- 유의적인 영향 없음
+- 중요한 영향 없음
+- 유의적인 변동 없음
+- 중요한 변동 없음
+- 변동사항 없음
+- 중요한 취약점이 발견되지 않음
+- 유의한 미비점 없음
+- no material weakness
+- no significant deficiency
+- no significant impact
+- no material change
+- not applicable
+- N/A
+- none
+doc_presence_markers:
+- 존재합니다
+- 발생하였습니다
+- 식별되었습니다
+- 발견되었습니다
+- 인식하였습니다
+- 공시하였습니다
+- 계류 중
+- 진행 중
+- 유의적인 영향
+- 중요한 영향
+- 유의적인 불확실성
+- 중요한 불확실성
+- 중요한 취약점
+- 유의한 미비점
+- 소급적용
+- 전진적용
+- material uncertainty
+- material weakness
+- significant deficiency
+- identified
+- recognized
+- disclosed
+- pending
+- probable
+domain_rules:
+- rule: 감가상각방법 변경은 일반적으로 회계정책 변경이 아니라 회계추정의 변경으로 처리한다.
+  ksa:
+  - 540
+  kifrs:
+  - 1008
+  - 1016
+  - 1038
+  혼동주의:
+  - 감가상각방법 변경을 회계정책 변경으로 단정하지 말 것
+  - 내용연수·잔존가치·상각방법 변경은 전진 반영되는 회계추정 변경 여부를 우선 판단
+- rule: 리스이용자는 단기리스·소액자산리스 예외를 제외하고 사용권자산과 리스부채를 인식한다.
+  ksa:
+  - 315
+  - 330
+  - 540
+  kifrs:
+  - 1116
+  혼동주의:
+  - 리스이용자 회계에서는 운용/금융 구분보다 사용권자산·리스부채 인식 판단이 우선
+  - 리스제공자 회계는 운용리스·금융리스 분류가 유지됨
+- rule: 고객과의 계약 수익은 5단계 모형(계약식별→수행의무→거래가격→배분→이행 시 인식)으로 판단한다.
+  ksa:
+  - 240
+  - 315
+  - 330
+  - 540
+  kifrs:
+  - 1115
+  혼동주의:
+  - 진행기준/한시점은 수행의무가 기간에 걸쳐 이행되는지로 판단
+  - 투입법·산출법은 진행률 측정방법이지 별도 기준이 아님
+- rule: 재고자산은 원가와 순실현가능가치 중 낮은 금액으로 측정하며, 원가흐름은 선입선출·가중평균 등을 쓴다.
+  ksa:
+  - 501
+  - 540
+  kifrs:
+  - 1002
+  혼동주의:
+  - 저가법은 원가흐름가정이 아니라 평가 기준
+  - NRV 하락은 평가손실·충당금 검토 대상
+- rule: 충당부채는 현재의무·자원유출 가능성·신뢰성 있는 추정을 충족할 때 인식, 우발부채는 공시 대상.
+  ksa:
+  - 501
+  - 540
+  kifrs:
+  - 1037
+  혼동주의:
+  - 소송 존재만으로 충당부채 인식을 단정하지 말 것
+  - 가능성 평가와 금액 추정 가능성을 함께 검토
+- rule: 특수관계자 공시는 거래금액 외 채권·채무 잔액, 약정, 지급보증, 주요 경영진 보상까지 포함될 수 있다.
+  ksa:
+  - 550
+  kifrs:
+  - 1024
+  혼동주의:
+  - 연결실체 내부거래와 외부 특수관계자 거래를 구분
+  - '''시장조건 거래'' 표현은 충분한 근거가 있을 때만'
+- rule: 금융상품은 분류·측정(1109), 공시(1107), 공정가치 서열체계(1113)를 구분해 검토한다.
+  ksa:
+  - 315
+  - 330
+  - 540
+  kifrs:
+  - 1109
+  - 1107
+  - 1113
+  혼동주의:
+  - 공정가치 평가=1113, 분류·손상=1109, 공시=1107
+- rule: 손상검사는 자산/현금창출단위의 장부금액과 회수가능액을 비교한다.
+  ksa:
+  - 540
+  kifrs:
+  - 1036
+  혼동주의:
+  - 영업권은 상각이 아니라 손상검사 대상
+  - 회수가능액=사용가치와 순공정가치 중 큰 금액
+- rule: 사업결합은 취득법 적용, 식별가능 자산·부채를 공정가치 측정, 영업권/염가매수차익 인식.
+  ksa:
+  - 540
+  kifrs:
+  - 1103
+  혼동주의:
+  - 자산취득과 사업결합을 구분
+  - 조건부대가는 최초·후속 측정 기준을 별도 검토
+- rule: 연결 여부는 지분율이 아니라 힘·변동이익 노출·연관성으로 지배력을 판단한다.
+  ksa:
+  - 600
+  kifrs:
+  - 1110
+  - 1112
+  혼동주의:
+  - 지분율이 낮아도 계약상 의사결정권+변동이익 노출이면 지배력 검토
+  - 구조화기업은 실질 지배력 판단이 중요
+account_hierarchy:
+  자산:
+    synonyms:
+    - 자산
+    - assets
+    children:
+      유동자산:
+        synonyms:
+        - 유동자산
+        - current assets
+        accounts:
+          현금및현금성자산:
+          - 현금 및 현금성 자산
+          - 현금성자산
+          - 현금
+          - cash and cash equivalents
+          단기금융상품:
+          - 단기 금융상품
+          - 단기예금
+          - short-term financial instruments
+          매출채권:
+          - 외상매출금
+          - 받을어음
+          - accounts receivable
+          - trade receivables
+          기타수취채권:
+          - 미수금
+          - 미수수익
+          - other receivables
+          계약자산:
+          - 미청구공사
+          - contract assets
+          - unbilled receivables
+          재고자산:
+          - 상품
+          - 제품
+          - 반제품
+          - 재공품
+          - 원재료
+          - 저장품
+          - inventories
+          기타유동자산:
+          - 선급금
+          - 선급비용
+          - prepaid expenses
+      비유동자산:
+        synonyms:
+        - 비유동자산
+        - non-current assets
+        accounts:
+          유형자산:
+          - property plant and equipment
+          - PPE
+          - 토지
+          - 건물
+          - 구축물
+          - 기계장치
+          - 차량운반구
+          - 비품
+          - 건설중인자산
+          - 감가상각누계액
+          무형자산:
+          - intangible assets
+          - 영업권
+          - goodwill
+          - 개발비
+          - 산업재산권
+          - 소프트웨어
+          - 회원권
+          사용권자산:
+          - right-of-use asset
+          - ROU asset
+          투자부동산:
+          - investment property
+          관계기업투자:
+          - 관계기업투자주식
+          - investments in associates
+          장기금융상품:
+          - long-term financial instruments
+          금융자산:
+          - 당기손익공정가치금융자산
+          - 기타포괄손익공정가치금융자산
+          - 상각후원가금융자산
+          - FVTPL
+          - FVOCI
+          이연법인세자산:
+          - deferred tax assets
+          - DTA
+  부채:
+    synonyms:
+    - 부채
+    - liabilities
+    children:
+      유동부채:
+        synonyms:
+        - 유동부채
+        - current liabilities
+        accounts:
+          매입채무:
+          - 외상매입금
+          - 지급어음
+          - trade payables
+          - accounts payable
+          단기차입금:
+          - short-term borrowings
+          유동성장기부채:
+          - current portion of long-term debt
+          계약부채:
+          - 선수금
+          - 초과청구공사
+          - contract liabilities
+          리스부채:
+          - lease liabilities
+          충당부채:
+          - provisions
+          기타유동부채:
+          - 미지급금
+          - 미지급비용
+          - 예수금
+      비유동부채:
+        synonyms:
+        - 비유동부채
+        - non-current liabilities
+        accounts:
+          사채:
+          - 회사채
+          - bonds payable
+          - debentures
+          장기차입금:
+          - long-term borrowings
+          순확정급여부채:
+          - 확정급여부채
+          - 퇴직급여부채
+          - defined benefit obligations
+          이연법인세부채:
+          - deferred tax liabilities
+          - DTL
+          장기충당부채:
+          - 비유동충당부채
+  자본:
+    synonyms:
+    - 자본
+    - equity
+    accounts:
+      자본금:
+      - share capital
+      - capital stock
+      자본잉여금:
+      - 주식발행초과금
+      - capital surplus
+      - share premium
+      기타포괄손익누계액:
+      - accumulated other comprehensive income
+      - AOCI
+      이익잉여금:
+      - retained earnings
+      비지배지분:
+      - non-controlling interests
+      - NCI
+  손익:
+    synonyms:
+    - 손익
+    - 포괄손익
+    - profit or loss
+    accounts:
+      매출액:
+      - 매출
+      - 수익
+      - 영업수익
+      - revenue
+      - sales
+      매출원가:
+      - cost of sales
+      - COGS
+      매출총이익:
+      - gross profit
+      판매비와관리비:
+      - 판관비
+      - 판매관리비
+      - SG&A
+      영업이익:
+      - 영업손익
+      - operating profit
+      - operating income
+      금융수익:
+      - 이자수익
+      - 배당금수익
+      - finance income
+      금융비용:
+      - 이자비용
+      - finance costs
+      법인세비용차감전순이익:
+      - 세전이익
+      - profit before tax
+      - PBT
+      법인세비용:
+      - income tax expense
+      당기순이익:
+      - 순이익
+      - net income
+      - profit for the year
+      기타포괄손익:
+      - other comprehensive income
+      - OCI
+kam_topics:
+  수익인식:
+    synonyms:
+    - 매출인식
+    - revenue recognition
+    - 고객과의 계약에서 생기는 수익
+    kifrs:
+    - 1115
+    typical:
+    - 수행의무 식별과 거래가격 배분
+    - 기간에 걸쳐/한 시점 인식 판단
+    - 매출 기간귀속
+  공사수익_진행기준:
+    synonyms:
+    - 진행률 기준 수익
+    - 투입법
+    - 총예정원가
+    - 공사진행률
+    - percentage of completion
+    - POC
+    kifrs:
+    - 1115
+    typical:
+    - 총계약수익·원가 추정 불확실성
+    - 진행률 산정
+    - 계약변경·클레임·지체상금
+  재고자산_평가:
+    synonyms:
+    - 재고자산평가충당금
+    - 순실현가능가치
+    - inventory valuation
+    - NRV
+    kifrs:
+    - 1002
+    typical:
+    - NRV 산정
+    - 장기체화·진부화 재고 평가
+    - 재고실사
+  영업권_무형자산_손상:
+    synonyms:
+    - 영업권 손상
+    - 손상검사
+    - 현금창출단위
+    - CGU
+    - impairment of goodwill
+    kifrs:
+    - 1036
+    - 1038
+    - 1103
+    typical:
+    - CGU 식별·회수가능액
+    - 할인율·장기성장률
+    - 미래현금흐름 추정
+  금융상품_공정가치:
+    synonyms:
+    - 공정가치 평가
+    - 파생상품 평가
+    - fair value measurement
+    - Level 3
+    kifrs:
+    - 1109
+    - 1107
+    - 1113
+    typical:
+    - 관측불가능 투입변수
+    - 평가모형·가정
+    - 서열체계 분류
+  이연법인세:
+    synonyms:
+    - 이연법인세자산
+    - 실현가능성
+    - deferred tax
+    - DTA
+    kifrs:
+    - 1012
+    typical:
+    - 미래 과세소득 추정
+    - 일시적차이·결손금 인식
+    - 세율 적용
+  충당부채_소송:
+    synonyms:
+    - 소송
+    - 우발부채
+    - litigation
+    - contingent liability
+    kifrs:
+    - 1037
+    typical:
+    - 소송 결과·손실 추정 불확실성
+    - 충당부채 인식요건
+    - 우발부채 공시 완전성
+  특수관계자_거래:
+    synonyms:
+    - 관계기업 거래
+    - 주요 경영진 보상
+    - related party transactions
+    kifrs:
+    - 1024
+    typical:
+    - 특수관계자 식별 완전성
+    - 거래조건·금액 공시
+    - 채권채무·지급보증
+  PF_우발부채:
+    synonyms:
+    - 프로젝트파이낸싱
+    - PF 지급보증
+    - 책임준공
+    - 자금보충약정
+    - 채무인수약정
+    kifrs:
+    - 1037
+    - 1107
+    - 1109
+    typical:
+    - PF 보증·자금보충 완전성
+    - 책임준공 미이행 손실가능성
+    - 금융보증부채 인식·공시
+  리스:
+    synonyms:
+    - 사용권자산
+    - 리스부채
+    - lease
+    - right-of-use asset
+    kifrs:
+    - 1116
+    typical:
+    - 리스계약 식별 완전성
+    - 리스기간·할인율·리스료
+    - 사용권자산·리스부채 측정
+  사업결합:
+    synonyms:
+    - 취득법
+    - 영업권
+    - 염가매수차익
+    - business combination
+    - PPA
+    kifrs:
+    - 1103
+    - 1113
+    typical:
+    - 취득자·취득일
+    - 식별가능 자산·부채 공정가치
+    - 영업권·조건부대가
+  종속기업_연결:
+    synonyms:
+    - 연결범위
+    - 지배력
+    - 구조화기업
+    - consolidation
+    - control assessment
+    kifrs:
+    - 1110
+    - 1112
+    typical:
+    - 지배력 판단
+    - 구조화기업 힘·변동이익
+    - 연결범위 변동
+  매출채권_손상:
+    synonyms:
+    - 대손충당금
+    - 기대신용손실
+    - ECL
+    - impairment of receivables
+    kifrs:
+    - 1109
+    typical:
+    - ECL 모형 가정
+    - 연체율·회수율·미래전망
+    - 개별/집합 평가
+  퇴직급여부채:
+    synonyms:
+    - 확정급여채무
+    - 보험수리적 가정
+    - defined benefit obligation
+    - DBO
+    kifrs:
+    - 1019
+    typical:
+    - 할인율·임금상승률 가정
+    - 사외적립자산 공정가치
+    - DBO 측정

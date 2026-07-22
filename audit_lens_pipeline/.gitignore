@@ -1,0 +1,14 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# 임시 검증 스크립트(probe/peek)
+_scratch/
+
+# Secrets — 절대 커밋 금지
+.env
+
+# 파이프라인 산출물 (용량 큼 / 재생성 가능)
+data/

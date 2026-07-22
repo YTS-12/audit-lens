@@ -1,0 +1,9 @@
+# 감사렌즈 리버스프록시 — Let's Encrypt 자동 발급·갱신(§운영 TLS)
+# www.cpa-yts.p-e.kr → app:8000(자기서명 HTTPS, 내부망이라 검증 생략)
+www.cpa-yts.p-e.kr {
+	reverse_proxy https://app:8000 {
+		transport http {
+			tls_insecure_skip_verify
+		}
+	}
+}

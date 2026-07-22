@@ -1,0 +1,9 @@
+# GPU 오버라이드 — 재임베딩 등 대량 작업 시에만 사용.
+# 사용법: 인스턴스 타입을 g4dn.xlarge로 되돌린 뒤
+#   docker compose -f docker-compose.aws.yml -f docker-compose.gpu.yml up -d
+services:
+  app:
+    environment:
+      - EMBEDDING_DEVICE=cuda
+    deploy:
+      resources: { reservations: { devices: [{ driver: nvidia, count: all, capabilities: [gpu] }] } }

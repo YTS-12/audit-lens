@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>감사렌즈 · 감사보고서 분석</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" />
+<style>
+  :root{
+    --bg:#F6F8F7; --surface:#FFFFFF; --surface-2:#F0F3F1;
+    --line:#E2E7E4; --line-strong:#CBD3CE;
+    --ink:#15211C; --ink-2:#54615B; --ink-3:#869089;
+    --primary:#0E5C4A; --primary-700:#0A4839; --primary-50:#E7F1EE;
+    --amber:#8A5A00; --amber-bg:#FBE7A2; --amber-line:#EBCB6E;
+    --warn:#A8451B; --warn-bg:#F6E5DC;
+    --radius:10px; --radius-sm:7px;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+    --shadow:0 1px 2px rgba(21,33,28,.04),0 8px 24px rgba(21,33,28,.06);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--sans);
+    font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--primary); text-decoration:none}
+  a:hover{text-decoration:underline}
+  .mono{font-family:var(--mono); font-feature-settings:"tnum" 1}
+  button{font-family:inherit}
+  :focus-visible{outline:2px solid var(--primary); outline-offset:2px; border-radius:4px}
+
+  /* ---- header ---- */
+  header{
+    position:sticky; top:0; z-index:20; background:rgba(246,248,247,.86);
+    backdrop-filter:saturate(140%) blur(8px); border-bottom:1px solid var(--line);
+  }
+  .bar{max-width:1180px; margin:0 auto; padding:14px 22px; display:flex; align-items:center; gap:18px}
+  .brand{display:flex; align-items:baseline; gap:10px}
+  .logo{
+    font-weight:800; font-size:20px; letter-spacing:-.02em; color:var(--ink);
+    display:flex; align-items:center; gap:8px;
+  }
+  .logo .glass{
+    width:18px;height:18px;border:2.5px solid var(--primary);border-radius:50%;
+    position:relative; display:inline-block; flex:0 0 auto;
+  }
+  .logo .glass::after{content:"";position:absolute;width:2.5px;height:8px;background:var(--primary);
+    transform:rotate(-45deg);right:-5px;bottom:-4px;border-radius:2px}
+  .eyebrow{font-family:var(--mono); font-size:10.5px; letter-spacing:.18em; color:var(--ink-3); text-transform:uppercase}
+  .coverage{margin-left:auto; display:flex; align-items:center; gap:14px}
+  .cov-pill{font-family:var(--mono); font-size:11.5px; color:var(--ink-2); background:var(--surface);
+    border:1px solid var(--line); padding:6px 10px; border-radius:999px; white-space:nowrap}
+  .cov-dot{width:7px;height:7px;border-radius:50%;background:var(--primary);display:inline-block;margin-right:6px;vertical-align:middle}
+
+  /* ---- layout ---- */
+  main{max-width:1180px; margin:0 auto; padding:30px 22px 80px}
+
+  /* ---- query card ---- */
+  .ask{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:22px; }
+  .ask h1{margin:0 0 14px; font-size:19px; letter-spacing:-.01em}
+  .ask h1 span{color:var(--ink-3); font-weight:500; font-size:14px; margin-left:8px}
+  .qrow{display:flex; gap:10px; align-items:stretch}
+  .qinput{flex:1; display:flex; align-items:center; gap:10px; background:var(--surface-2);
+    border:1px solid var(--line-strong); border-radius:var(--radius-sm); padding:0 14px}
+  .qinput:focus-within{border-color:var(--primary); background:#fff}
+  .qinput svg{flex:0 0 auto; color:var(--ink-3)}
+  .qinput input{flex:1; border:0; background:transparent; padding:14px 0; font-size:16px; color:var(--ink); outline:none}
+  .btn{border:0; border-radius:var(--radius-sm); padding:0 22px; font-weight:700; font-size:15px;
+    cursor:pointer; transition:background .15s}
+  .btn-primary{background:var(--primary); color:#fff}
+  .btn-primary:hover{background:var(--primary-700)}
+  .btn-primary:disabled{background:var(--line-strong); cursor:not-allowed}
+  .examples{margin-top:14px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .examples .lbl{font-size:12.5px; color:var(--ink-3); margin-right:2px}
+  .chip{font-size:13px; color:var(--ink-2); background:var(--surface-2); border:1px solid var(--line);
+    padding:6px 11px; border-radius:999px; cursor:pointer; transition:.12s}
+  .chip:hover{border-color:var(--primary); color:var(--primary); background:var(--primary-50)}
+
+  /* ---- filters ---- */
+  .filters{margin-top:16px; padding-top:16px; border-top:1px dashed var(--line);
+    display:flex; flex-wrap:wrap; gap:14px}
+  .field{display:flex; flex-direction:column; gap:5px}
+  .field label{font-size:11px; font-family:var(--mono); letter-spacing:.06em; color:var(--ink-3); text-transform:uppercase}
+  .field select{font-family:inherit; font-size:14px; color:var(--ink); background:var(--surface);
+    border:1px solid var(--line-strong); border-radius:var(--radius-sm); padding:8px 11px; min-width:120px; cursor:pointer}
+
+  /* ---- interpretation (signature) ---- */
+  .interp{margin-top:22px; background:linear-gradient(180deg,#fff, #fcfdfc);
+    border:1px solid var(--line); border-left:3px solid var(--primary); border-radius:var(--radius); padding:18px 20px}
+  .interp .head{display:flex; align-items:center; gap:9px; margin-bottom:14px}
+  .interp .head h2{margin:0; font-size:15px; letter-spacing:-.01em}
+  .interp .head .tag{font-family:var(--mono); font-size:10px; letter-spacing:.12em; color:var(--primary);
+    background:var(--primary-50); border:1px solid #cfe3dd; padding:3px 7px; border-radius:5px; text-transform:uppercase}
+  .interp-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px 26px}
+  .iblock .k{font-size:11.5px; color:var(--ink-3); font-family:var(--mono); letter-spacing:.05em; margin-bottom:6px}
+  .iblock .v{font-size:14px}
+  .pill{display:inline-block; font-size:12.5px; padding:3px 9px; border-radius:6px; margin:2px 4px 2px 0;
+    background:var(--surface-2); border:1px solid var(--line)}
+  .pill.term{background:var(--primary-50); border-color:#cfe3dd; color:var(--primary-700)}
+  .pill.q{font-family:var(--mono); font-size:12px; background:#fff; color:var(--ink-2)}
+  .pill.rule{background:var(--amber-bg); border-color:var(--amber-line); color:var(--amber)}
+
+  /* ---- results ---- */
+  .results-head{margin-top:26px; display:flex; align-items:flex-end; justify-content:space-between; gap:14px; flex-wrap:wrap}
+  .results-head h2{margin:0; font-size:16px}
+  .results-head .count{font-family:var(--mono); color:var(--primary-700); font-weight:700}
+  .btn-ghost{background:var(--surface); border:1px solid var(--line-strong); color:var(--ink);
+    border-radius:var(--radius-sm); padding:9px 14px; font-weight:600; font-size:13.5px; cursor:pointer; display:inline-flex; gap:7px; align-items:center}
+  .btn-ghost:hover{border-color:var(--primary); color:var(--primary)}
+  .disclaimer{margin-top:10px; font-size:12.5px; color:var(--ink-2); background:var(--warn-bg);
+    border:1px solid #e8cdbe; border-radius:var(--radius-sm); padding:9px 13px; display:flex; gap:8px; align-items:flex-start}
+  .disclaimer b{color:var(--warn)}
+
+  .table{margin-top:14px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden}
+  .trow{display:grid; grid-template-columns:1.5fr 1fr 1.6fr 1fr auto; gap:14px; align-items:center;
+    padding:14px 18px; border-bottom:1px solid var(--line); cursor:pointer; transition:background .12s}
+  .trow:last-child{border-bottom:0}
+  .trow:hover{background:var(--surface-2)}
+  .thead{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-3); background:var(--surface-2); cursor:default}
+  .thead:hover{background:var(--surface-2)}
+  .co .name{font-weight:700; letter-spacing:-.01em}
+  .co .code{font-family:var(--mono); font-size:11.5px; color:var(--ink-3)}
+  .meta{font-size:13px; color:var(--ink-2)}
+  .meta .mkt{font-family:var(--mono); font-size:11px; color:var(--ink-3)}
+  .concl{font-size:13.5px}
+  .arrow{font-family:var(--mono); color:var(--primary-700); font-weight:700}
+  .conf{display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600;
+    padding:4px 9px; border-radius:999px; white-space:nowrap}
+  .conf.ok{background:var(--primary-50); color:var(--primary-700); border:1px solid #cfe3dd}
+  .conf.review{background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-line)}
+  .conf .d{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .chev{color:var(--ink-3); transition:transform .18s}
+  .trow.open .chev{transform:rotate(90deg)}
+
+  /* expanded evidence */
+  .evi{padding:0 18px; background:var(--surface-2); border-bottom:1px solid var(--line);
+    max-height:0; overflow:hidden; transition:max-height .25s ease, padding .25s ease}
+  .evi.open{max-height:600px; padding:16px 18px}
+  .evi .crumb{font-family:var(--mono); font-size:11.5px; color:var(--ink-2); margin-bottom:10px; display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  .crumb .sep{color:var(--ink-3)}
+  .crumb .loc{background:#fff; border:1px solid var(--line); padding:2px 7px; border-radius:5px}
+  .snippet{background:#fff; border:1px solid var(--line); border-radius:var(--radius-sm); padding:13px 15px;
+    font-size:13.5px; line-height:1.7; color:var(--ink)}
+  .hl{background:var(--amber-bg); padding:1px 3px; border-radius:3px; font-weight:600}
+  .evi-foot{margin-top:11px; display:flex; gap:18px; flex-wrap:wrap; align-items:center; font-size:12.5px; color:var(--ink-2)}
+  .evi-foot .k{font-family:var(--mono); font-size:10.5px; color:var(--ink-3); letter-spacing:.05em; margin-right:5px}
+  .dart{display:inline-flex; gap:5px; align-items:center; font-weight:600}
+
+  /* states */
+  .empty,.loading{margin-top:26px; background:var(--surface); border:1px dashed var(--line-strong);
+    border-radius:var(--radius); padding:46px 24px; text-align:center; color:var(--ink-2)}
+  .empty .big{font-size:16px; color:var(--ink); font-weight:700; margin-bottom:6px}
+  .empty .glassbig{width:34px;height:34px;border:3px solid var(--line-strong);border-radius:50%;
+    margin:0 auto 16px; position:relative}
+  .empty .glassbig::after{content:"";position:absolute;width:3px;height:14px;background:var(--line-strong);
+    transform:rotate(-45deg);right:-9px;bottom:-7px;border-radius:2px}
+  .steps{display:flex; flex-direction:column; gap:11px; max-width:380px; margin:0 auto; text-align:left}
+  .step{display:flex; align-items:center; gap:11px; font-size:14px; color:var(--ink-3)}
+  .step .ic{width:20px;height:20px;border-radius:50%;border:2px solid var(--line-strong); flex:0 0 auto; position:relative}
+  .step.active{color:var(--ink)}
+  .step.active .ic{border-color:var(--primary)}
+  .step.active .ic::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--primary);
+    animation:pulse 1s infinite}
+  .step.done{color:var(--ink-2)}
+  .step.done .ic{border-color:var(--primary); background:var(--primary)}
+  .step.done .ic::after{content:"✓";position:absolute;inset:0;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+  footer{max-width:1180px;margin:0 auto;padding:0 22px 50px;color:var(--ink-3);font-size:12px;text-align:center}
+  footer .mono{color:var(--ink-3)}
+
+  @media (max-width:760px){
+    .qrow{flex-direction:column}
+    .btn-primary{padding:13px}
+    .interp-grid{grid-template-columns:1fr}
+    .trow{grid-template-columns:1fr auto; gap:8px}
+    .trow .meta,.trow .conf-cell{display:none}
+    .thead{display:none}
+    .coverage{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div class="brand">
+      <div class="logo"><span class="glass"></span>감사렌즈</div>
+      <div class="eyebrow">Audit Report Intelligence</div>
+    </div>
+    <div class="coverage">
+      <span class="cov-pill"><span class="cov-dot"></span>적재 코스피 832사 · 2022–2024 + 최근 분기/반기</span>
+      <span class="cov-pill" id="updatedPill">갱신 2026-06-20</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- query -->
+  <section class="ask">
+    <h1>무엇을 찾으세요?<span>자연어로 물어보면 근거와 함께 기업을 찾아 드립니다</span></h1>
+    <div class="qrow">
+      <label class="qinput">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="q" type="text" placeholder="예: 건설업 중에서 감가상각방법을 변경한 기업 모두 알려줘" autocomplete="off" />
+      </label>
+      <button class="btn btn-primary" id="go">검색</button>
+    </div>
+    <div class="examples">
+      <span class="lbl">예시</span>
+      <button class="chip" data-ex="dep">건설업 감가상각방법 변경</button>
+      <button class="chip" data-ex="gc">계속기업 불확실성 언급 기업</button>
+      <button class="chip" data-ex="kam">핵심감사사항에 수익인식 포함</button>
+      <button class="chip" data-ex="lease">IFRS16 리스 도입 영향 (스키마 밖)</button>
+    </div>
+    <div class="filters">
+      <div class="field"><label>시장</label><select id="f-mkt"><option selected>코스피</option></select></div>
+      <div class="field"><label>산업</label><select id="f-ind"><option>전체</option><option selected>건설업</option><option>제조업</option><option>도소매</option><option>정보서비스</option></select></div>
+      <div class="field"><label>기간</label><select id="f-yr"><option selected>최근 3년</option><option>2024</option><option>2023</option><option>2022</option></select></div>
+      <div class="field"><label>보증유형</label><select id="f-asr"><option selected>감사(연차)</option><option>검토(분/반기)</option><option>전체</option></select></div>
+      <div class="field"><label>재무제표</label><select id="f-cons"><option selected>연결</option><option>별도</option></select></div>
+    </div>
+  </section>
+
+  <!-- dynamic area -->
+  <div id="stage">
+    <div class="empty">
+      <div class="glassbig"></div>
+      <div class="big">질문을 입력하면 근거와 함께 결과가 나타납니다</div>
+      <div>모든 답변에는 기업명 · 보고서 내 위치 · 원문 근거 · DART 링크가 함께 제시됩니다.</div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span class="mono">감사렌즈 prototype</span> · 출처: OpenDART · KRX OpenAPI · 분석: Claude · 본 도구는 회계사의 판단을 보조하며 최종 확인 책임은 사용자에게 있습니다.
+</footer>
+
+<script>
+/* ---------- mock data ---------- */
+const DATA = {
+  dep: {
+    interp: {
+      intent:"스크리닝 — 조건에 맞는 기업 전부 찾기",
+      filters:["산업: 건설업","기간: 최근 3년","재무제표: 연결(기본)"],
+      terms:["감가상각방법 변경","정액법","정률법","생산량비례법","내용연수 변경"],
+      rule:"K-IFRS: 감가상각방법 변경 = 회계추정의 변경",
+      queries:["감가상각방법 변경 건설업","정액법→정률법 변경 주석","유형자산 내용연수 추정 변경"],
+      route:"Fact Store(사전추출) + 근거 청크 조인"
+    },
+    rows:[
+      {name:"대성건설", code:"012450 · KOSPI", ind:"건설업", concl:["정액법","정률법","기계장치"], conf:"ok",
+       crumb:["2024 사업보고서","감사보고서","재무제표 주석","3. 유형자산"], asr:"감사 · 적정", cons:"연결", unit:"백만원",
+       snip:'당사는 당기 중 기계장치의 감가상각방법을 <span class="hl">정액법에서 정률법으로 변경</span>하였습니다. 이는 자산의 미래 경제적효익 소비형태를 더 잘 반영하기 위한 것으로, 한국채택국제회계기준에 따라 회계추정의 변경으로 회계처리하였습니다.'},
+      {name:"한울ENG", code:"045660 · KOSPI", ind:"건설업", concl:["정률법","정액법","건물"], conf:"ok",
+       crumb:["2023 사업보고서","감사보고서","재무제표 주석","2. 중요한 회계정책"], asr:"감사 · 적정", cons:"연결", unit:"천원",
+       snip:'유형자산 중 <span class="hl">건물에 대한 감가상각방법을 정률법에서 정액법으로 변경</span>하였으며, 변경에 따른 당기 손익 영향은 주석 25에 기재하였습니다.'},
+      {name:"서진토건", code:"098120 · KOSPI", ind:"건설업", concl:["내용연수","상향 조정"], conf:"review",
+       crumb:["2024 사업보고서","감사보고서","재무제표 주석","3. 유형자산"], asr:"감사 · 적정", cons:"연결", unit:"백만원",
+       snip:'당기 중 일부 구축물의 <span class="hl">내용연수를 재검토하여 추정치를 변경</span>하였습니다. 감가상각방법 자체의 변경 여부는 본문에 명시되지 않아 추가 확인이 필요합니다.'},
+      {name:"제일종합건설", code:"007110 · KOSPI", ind:"건설업", concl:["정액법","생산량비례법"], conf:"ok",
+       crumb:["2022 사업보고서","감사보고서","재무제표 주석","4. 유형자산"], asr:"감사 · 적정", cons:"연결", unit:"백만원",
+       snip:'채석설비에 대하여 <span class="hl">감가상각방법을 정액법에서 생산량비례법으로 변경</span>하였습니다. 이는 자원 채굴량에 따른 효익 소비형태를 반영한 것입니다.'},
+      {name:"동방건설산업", code:"131290 · KOSPI", ind:"건설업", concl:["정액법","정률법","차량운반구"], conf:"ok",
+       crumb:["2023 사업보고서","감사보고서","재무제표 주석","3. 유형자산"], asr:"감사 · 적정", cons:"연결", unit:"백만원",
+       snip:'<span class="hl">차량운반구의 감가상각방법을 정액법에서 정률법으로 변경</span>하였고, 전진적으로 적용하였습니다.'}
+    ]
+  },
+  gc:{
+    interp:{intent:"스크리닝 — 조건에 맞는 기업 전부 찾기",
+      filters:["산업: 건설업","기간: 최근 3년","재무제표: 연결(기본)"],
+      terms:["계속기업 불확실성","계속기업 가정","중요한 불확실성"],
+      rule:"감사보고서 '계속기업 관련 중요한 불확실성' 단락 + 주석 대조",
+      queries:["계속기업 중요한 불확실성 단락","순손실 자본잠식 계속기업","차입금 상환 불확실성"],
+      route:"Fact Store(감사의견·강조사항) + 근거 청크"},
+    rows:[
+      {name:"서진토건", code:"098120 · KOSPI", ind:"건설업", concl:["계속기업","중요한 불확실성"], conf:"ok",
+       crumb:["2024 사업보고서","감사보고서","계속기업 관련 중요한 불확실성"], asr:"감사 · 적정(강조사항)", cons:"연결", unit:"백만원",
+       snip:'재무제표에 대한 의견을 변형하지 않았으나, <span class="hl">계속기업으로서의 존속능력에 유의적 의문을 제기할 수 있는 중요한 불확실성이 존재</span>함을 알려드립니다.'},
+      {name:"한울ENG", code:"045660 · KOSPI", ind:"건설업", concl:["영업손실","불확실성"], conf:"review",
+       crumb:["2023 사업보고서","감사보고서","재무제표 주석","1. 회사의 개요"], asr:"감사 · 적정", cons:"연결", unit:"천원",
+       snip:'당기 연속 영업손실이 발생하였으나, 감사보고서 본문에 별도의 <span class="hl">계속기업 강조사항 단락은 확인되지 않았습니다</span>. 회계사 확인 권장.'}
+    ]
+  },
+  kam:{
+    interp:{intent:"스크리닝 — 조건에 맞는 기업 전부 찾기",
+      filters:["산업: 건설업","기간: 최근 3년","재무제표: 연결(기본)"],
+      terms:["핵심감사사항(KAM)","수익인식","진행기준","공사수익"],
+      rule:"건설계약 수익은 진행기준 — 추정 총원가 변동이 KAM 단골 주제",
+      queries:["핵심감사사항 수익인식","공사진행률 추정 KAM","건설계약 총예정원가 KAM"],
+      route:"벡터검색(KAM 섹션) + Fact Store(KAM 주제 태그)"},
+    rows:[
+      {name:"대성건설", code:"012450 · KOSPI", ind:"건설업", concl:["KAM","공사수익 진행기준"], conf:"ok",
+       crumb:["2024 사업보고서","감사보고서","핵심감사사항"], asr:"감사 · 적정", cons:"연결", unit:"백만원",
+       snip:'핵심감사사항으로 <span class="hl">진행기준에 따른 공사수익 인식의 적정성</span>을 선정하였습니다. 총공사예정원가 추정에 경영진의 유의적 판단이 개입됩니다.'},
+      {name:"제일종합건설", code:"007110 · KOSPI", ind:"건설업", concl:["KAM","총예정원가 추정"], conf:"ok",
+       crumb:["2023 사업보고서","감사보고서","핵심감사사항"], asr:"감사 · 적정", cons:"연결", unit:"백만원",
+       snip:'<span class="hl">건설계약 총예정원가 추정의 불확실성</span>을 핵심감사사항으로 식별하고, 원가 견적 절차의 통제를 검토하였습니다.'}
+    ]
+  },
+  lease:{
+    schemaOut:true,
+    interp:{intent:"스키마 밖 자유질의 → 온디맨드 추출",
+      filters:["산업: 건설업","기간: 최근 3년","재무제표: 연결(기본)"],
+      terms:["IFRS16","리스","사용권자산","리스부채","최초 적용 영향"],
+      rule:"사전 추출 항목 아님 → 후보군 좁힌 뒤 질의시점 추출",
+      queries:["사용권자산 리스부채 최초 인식","IFRS16 전환 부채 증가","리스 회계처리 변경 영향"],
+      route:"메타필터(건설업) → 후보 보고서 온디맨드 추출(병렬)"},
+    rows:[
+      {name:"동방건설산업", code:"131290 · KOSPI", ind:"건설업", concl:["리스부채","증가"], conf:"ok",
+       crumb:["2023 사업보고서","감사보고서","재무제표 주석","12. 리스"], asr:"감사 · 적정", cons:"연결", unit:"백만원",
+       snip:'기준서 적용으로 <span class="hl">사용권자산과 리스부채를 최초 인식</span>하였으며, 리스부채 증가가 부채비율에 미치는 영향을 주석에 공시하였습니다.'},
+      {name:"대성건설", code:"012450 · KOSPI", ind:"건설업", concl:["사용권자산","공시"], conf:"review",
+       crumb:["2024 사업보고서","감사보고서","재무제표 주석","12. 리스"], asr:"감사 · 적정", cons:"연결", unit:"백만원",
+       snip:'리스 관련 <span class="hl">사용권자산 잔액을 공시</span>하였으나, 최초 적용 시점의 부채 증가 규모는 본문에서 직접 확인되지 않아 원문 확인이 필요합니다.'}
+    ]
+  }
+};
+const STEP_LABELS=["질문 해석","멀티쿼리 생성·온톨로지 확장","대상 기업 선별","근거 추출·인용 검증","결과 정리"];
+
+let CURRENT=[]; // for export
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const stage=$("#stage");
+function esc(t){return t.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+function renderLoading(){
+  stage.innerHTML=`<div class="loading"><div class="steps">${
+    STEP_LABELS.map((l,i)=>`<div class="step" data-i="${i}"><span class="ic"></span>${l}</div>`).join("")
+  }</div></div>`;
+}
+function advance(i){
+  document.querySelectorAll(".step").forEach((el,idx)=>{
+    el.classList.toggle("active",idx===i);
+    el.classList.toggle("done",idx<i);
+  });
+}
+
+function pillList(arr,cls){return arr.map(t=>`<span class="pill ${cls||''}">${esc(t)}</span>`).join("");}
+
+function renderInterp(I){
+  const qpills=I.queries.map(q=>`<span class="pill q">› ${esc(q)}</span>`).join("");
+  return `<section class="interp">
+    <div class="head"><h2>이렇게 이해했어요</h2><span class="tag">Query Understanding</span></div>
+    <div class="interp-grid">
+      <div class="iblock"><div class="k">의도</div><div class="v">${esc(I.intent)}</div></div>
+      <div class="iblock"><div class="k">적용 필터</div><div class="v">${pillList(I.filters)}</div></div>
+      <div class="iblock"><div class="k">핵심 개념 · 온톨로지 확장</div><div class="v">${pillList(I.terms,'term')}</div></div>
+      <div class="iblock"><div class="k">도메인 규칙</div><div class="v"><span class="pill rule">${esc(I.rule)}</span></div></div>
+      <div class="iblock" style="grid-column:1/-1"><div class="k">생성된 하위질의 (멀티쿼리)</div><div class="v">${qpills}</div></div>
+      <div class="iblock" style="grid-column:1/-1"><div class="k">검색 경로</div><div class="v">${esc(I.route)}</div></div>
+    </div>
+  </section>`;
+}
+
+function rowHTML(r,i){
+  const conf=r.conf==="ok"
+    ? `<span class="conf ok"><span class="d"></span>근거 검증됨</span>`
+    : `<span class="conf review"><span class="d"></span>검토 필요</span>`;
+  const concl = r.concl.length>=2 && r.conf==="ok" && r.concl.length<=3 && r.concl[0] && r.concl[1] && !r.concl[0].includes("KAM") && !r.concl[0].includes("계속") && !r.concl[0].includes("리스") && !r.concl[0].includes("내용연수")
+    ? `${esc(r.concl[0])} <span class="arrow">→</span> ${esc(r.concl[1])}${r.concl[2]?` <span style="color:var(--ink-3)">(${esc(r.concl[2])})</span>`:""}`
+    : r.concl.map(esc).join(" · ");
+  const crumb=r.crumb.map((c,idx)=>`${idx?'<span class="sep">›</span>':''}<span class="loc">${esc(c)}</span>`).join(" ");
+  const rcp="2026"+String(31000+i*137).slice(0,8).padEnd(8,"0");
+  const dcm=String(11142436+i*53);
+  const deep=`https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${rcp}&dcmNo=${dcm}`;
+  return `<div class="trow" data-row="${i}" role="button" tabindex="0" aria-expanded="false">
+      <div class="co"><div class="name">${esc(r.name)}</div><div class="code mono">${esc(r.code)}</div></div>
+      <div class="meta">${esc(r.ind)}<br><span class="mkt">${esc(r.cons)} · ${esc(r.unit)}</span></div>
+      <div class="concl">${concl}</div>
+      <div class="conf-cell">${conf}</div>
+      <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+    </div>
+    <div class="evi" data-evi="${i}">
+      <div class="crumb">${crumb}</div>
+      <div class="snippet">${r.snip}</div>
+      <div class="evi-foot">
+        <span><span class="k">보증</span>${esc(r.asr)}</span>
+        <span><span class="k">재무제표</span>${esc(r.cons)}</span>
+        <span><span class="k">표시단위</span>${esc(r.unit)}</span>
+        <a class="dart" href="${deep}" target="_blank" rel="noopener">
+          연결 감사보고서 열기
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M9 7h8v8"/></svg>
+        </a>
+      </div>
+    </div>`;
+}
+
+function renderResults(d){
+  CURRENT=d.rows;
+  const note = d.schemaOut
+    ? `이 질의는 사전 추출 항목이 아니어서 <b>건설업 후보 기업을 좁힌 뒤 질의 시점에 직접 추출</b>했습니다. 누락·오탐 가능성이 상대적으로 높습니다.`
+    : `이 결과는 <b>코스피 전 종목(832사) · 2022–2024년 보고서</b> 기준입니다. 누락 가능성이 있어 회계사의 최종 확인이 필요합니다.`;
+  stage.innerHTML = renderInterp(d.interp) + `
+    <div class="results-head">
+      <h2>검색 결과 <span class="count">${d.rows.length}건</span></h2>
+      <button class="btn-ghost" id="export">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+        결과 내보내기 (CSV)
+      </button>
+    </div>
+    <div class="disclaimer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:0 0 auto;margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><div>${note}</div></div>
+    <div class="table">
+      <div class="trow thead"><div>기업 / 종목코드</div><div>산업 / 구분</div><div>핵심 결론</div><div>신뢰도</div><div></div></div>
+      ${d.rows.map(rowHTML).join("")}
+    </div>`;
+  // expand handlers
+  document.querySelectorAll(".trow[data-row]").forEach(row=>{
+    const i=row.dataset.row;
+    const toggle=()=>{
+      const evi=document.querySelector(`.evi[data-evi="${i}"]`);
+      const open=evi.classList.toggle("open");
+      row.classList.toggle("open",open);
+      row.setAttribute("aria-expanded",open);
+    };
+    row.addEventListener("click",toggle);
+    row.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle();}});
+  });
+  $("#export").addEventListener("click",exportCSV);
+}
+
+function exportCSV(){
+  const head=["기업명","종목코드","산업","핵심결론","신뢰도","근거위치","보증유형","재무제표","표시단위"];
+  const lines=[head.join(",")].concat(CURRENT.map(r=>[
+    r.name, r.code.split(" · ")[0], r.ind, r.concl.join(" / "),
+    r.conf==="ok"?"근거검증됨":"검토필요", r.crumb.join(" > "), r.asr, r.cons, r.unit
+  ].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")));
+  const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download="감사렌즈_검색결과.csv"; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ---------- run ---------- */
+function detectKey(text){
+  if(/계속기업/.test(text)) return "gc";
+  if(/핵심감사|KAM|수익인식/i.test(text)) return "kam";
+  if(/리스|IFRS\s?16/i.test(text)) return "lease";
+  return "dep";
+}
+let timer=null;
+function run(key){
+  if(timer) return;
+  renderLoading();
+  let i=0; advance(0);
+  timer=setInterval(()=>{
+    i++;
+    if(i<STEP_LABELS.length){advance(i);}
+    else{clearInterval(timer);timer=null;
+      document.querySelectorAll(".step").forEach(el=>el.classList.add("done"));
+      setTimeout(()=>renderResults(DATA[key]),180);}
+  },520);
+}
+
+$("#go").addEventListener("click",()=>{
+  const t=$("#q").value.trim();
+  run(t?detectKey(t):"dep");
+});
+$("#q").addEventListener("keydown",e=>{if(e.key==="Enter")$("#go").click();});
+document.querySelectorAll(".chip[data-ex]").forEach(c=>{
+  c.addEventListener("click",()=>{
+    const map={dep:"건설업 중에서 감가상각방법을 변경한 기업 모두 알려줘",
+      gc:"건설업 중 계속기업 불확실성을 언급한 기업",
+      kam:"핵심감사사항에 수익인식이 포함된 건설사",
+      lease:"건설업에서 IFRS16 리스 도입으로 부채가 크게 늘어난 기업"};
+    $("#q").value=map[c.dataset.ex];
+    if(c.dataset.ex==="dep")$("#f-ind").value="건설업";
+    run(c.dataset.ex);
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+# 감사렌즈 로컬 PoC 인프라 (OpenSearch 하이브리드 + PostgreSQL Fact Store)
+# 실행: Docker Desktop 켠 뒤  ->  docker compose -f infra/docker-compose.yml up -d
+# 중지: docker compose -f infra/docker-compose.yml down   (데이터 유지: 볼륨)
+# 주의: PoC용으로 보안 플러그인 비활성(로컬 전용). 운영 전환 시 TLS/인증 필수.
+services:
+  opensearch:
+    build: { context: ./aws-single, dockerfile: opensearch.Dockerfile }  # nori 내장(재생성해도 유지)
+    image: audit-opensearch-nori:2.18.0
+    container_name: audit-opensearch
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g           # 로컬 메모리 절약
+      - DISABLE_SECURITY_PLUGIN=true                 # PoC: TLS/인증 끔
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - path.repo=/snap                              # 스냅샷(백업/이관) 저장소 경로
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+      nofile: { soft: 65536, hard: 65536 }
+    ports:
+      - "9200:9200"                                  # REST (http://localhost:9200)
+    volumes:
+      - osdata:/usr/share/opensearch/data
+      - ./snap:/snap                                 # 스냅샷 파일(호스트에서 추출·이관용)
+
+  postgres:
+    image: postgres:16
+    container_name: audit-postgres
+    environment:
+      - POSTGRES_USER=auditlens
+      - POSTGRES_PASSWORD=auditlens
+      - POSTGRES_DB=auditlens
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # 스키마 자동 적용(최초 1회): src/db/schema.sql
+      - ../src/db/schema.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+
+volumes:
+  osdata:
+  pgdata:

@@ -1,0 +1,23 @@
+#!/bin/bash
+# GPU EC2 부트: Secrets 로드 → ECR 풀 → 컨테이너 실행(엔드포인트/비밀 env 주입).
+# Deep Learning Base GPU AMI는 docker + nvidia-container-toolkit 사전설치.
+set -euo pipefail
+REGION="${region}"
+
+SECRET=$(aws secretsmanager get-secret-value --region "$REGION" --secret-id "${secret_arn}" --query SecretString --output text)
+get() { echo "$SECRET" | python3 -c "import sys,json;print(json.load(sys.stdin)['$1'])"; }
+PG_PASSWORD=$(get PG_PASSWORD)
+ANTHROPIC_API_KEY=$(get ANTHROPIC_API_KEY)
+OPENDART_API_KEY=$(get OPENDART_API_KEY)
+KRX_API_KEY=$(get KRX_API_KEY)
+
+aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "${ecr_url}"
+docker pull "${ecr_url}:latest"
+
+docker run -d --restart always --gpus all -p 8000:8000 --name audit-lens \
+  -e OPENSEARCH_HOST="${os_endpoint}" -e OPENSEARCH_PORT=443 -e OPENSEARCH_USE_SSL=true \
+  -e PG_HOST="${pg_host}" -e PG_PORT=5432 -e PG_DB="${db_name}" -e PG_USER="${db_user}" -e PG_PASSWORD="$PG_PASSWORD" \
+  -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" -e OPENDART_API_KEY="$OPENDART_API_KEY" -e KRX_API_KEY="$KRX_API_KEY" \
+  -e RERANKER_DEVICE=cuda \
+  "${ecr_url}:latest"
+# ※ 최초 실행은 데이터 마이그레이션(README 참조) 이후여야 정상 응답.

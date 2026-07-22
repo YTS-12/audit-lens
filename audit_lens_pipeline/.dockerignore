@@ -1,0 +1,13 @@
+# 이미지에서 제외(대용량·비밀·로컬 전용)
+data/                 # 파싱 청크·원본·색인 스냅샷(수십 GB) — 배포는 관리형 DB로 마이그레이션
+.venv/
+__pycache__/
+*.pyc
+.env                  # 로컬 비밀 — AWS는 Secrets Manager→env 주입
+.env.*
+inputs/               # KRX 수동 CSV(로컬 준비)
+감사렌즈_*.pdf
+감사렌즈_*.html
+.git/
+*.log
+_scratch/
