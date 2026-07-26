@@ -35,8 +35,12 @@ export function EvidenceCard({ it, lastQ, lastPath, onToast }: {
   const ok = !!it.verified;
   const basis = it.is_consolidated ? "연결" : "별도";
   const hasCtx = !!it.context && it.context.length > (it.quote || "").length + 20;
-  const w = it.wics;
-  const wOff = !!w && (w.source || "").includes("공식");
+  const ind = it.industry;
+  // 배지는 핵심 라벨만(최대 2개) — 보조·노출까지 붙이면 카드가 소란해진다. 전체는 툴팁으로.
+  const coreLabels = (ind?.labels || []).filter((l) => l.materiality === "핵심").slice(0, 2);
+  const indTip = (ind?.labels || [])
+    .map((l) => `${l.cls2}[${l.materiality}${l.rel && l.rel !== "직접영위" ? "·" + l.rel : ""}]`)
+    .join(" · ");
 
   const sendFb = async (verdict: "up" | "down") => {
     if (fbSent) return;
@@ -62,18 +66,17 @@ export function EvidenceCard({ it, lastQ, lastPath, onToast }: {
     <div className="rounded-xl border border-line bg-card p-4 shadow-sm">
       <div className="flex flex-wrap items-center gap-1.5 mb-2">
         <span className="font-bold text-[15px]">{it.corp_name}</span>
-        {w && w.dae && w.dae !== "미분류" && (
-          <>
-            <span className="rounded bg-green-soft text-green-deep text-[11px] px-1.5 py-0.5"
-              title={`WICS 코드 ${w.code || ""} · ${w.jung || ""}`}>
-              {w.dae}{w.so ? ` › ${w.so}` : ""}
-            </span>
-            <span
-              className={`rounded text-[11px] px-1.5 py-0.5 ${wOff ? "bg-green text-white" : "bg-line/60 text-ink-2"}`}
-              title={wOff ? undefined : `WICS 분류 근거: ${w.basis || ""} (확신도 ${w.confidence || ""})`}>
-              {wOff ? "WICS 공식" : "WICS 추정"}
-            </span>
-          </>
+        {coreLabels.map((l) => (
+          <span key={l.code} className="rounded bg-green-soft text-green-deep text-[11px] px-1.5 py-0.5"
+            title={`${l.cls1} › ${l.cls2} (${l.code}) — ${indTip}${l.basis ? `\n근거: ${l.basis}` : ""}`}>
+            {l.cls1} › {l.cls2}
+          </span>
+        ))}
+        {coreLabels.length > 0 && (
+          <span className="rounded text-[11px] px-1.5 py-0.5 bg-green text-white"
+            title={`감사쟁점 유사성 기준 자체 분류 — 전체 라벨: ${indTip}`}>
+            {ind?.source || "자체 분류"}
+          </span>
         )}
         <span className="rounded bg-bg text-ink-2 text-[11px] px-1.5 py-0.5 border border-line">
           {it.fiscal_year || ""} · {basis}

@@ -30,7 +30,7 @@ export function Pill({ children, dim }: { children: React.ReactNode; dim?: boole
 export function InterpPanel({ u }: { u: Understanding }) {
   const filters: string[] = [];
   if (u.industry) filters.push("산업: " + u.industry);
-  if (u._wics_auto) filters.push(`업종 해석: ${u._wics_auto.label} (${u._wics_auto.n}사)`);
+  if (u._ind_auto) filters.push(`업종 해석: ${u._ind_auto.label} (${u._ind_auto.n}사)`);
   if (u.is_consolidated === true) filters.push("연결");
   else if (u.is_consolidated === false) filters.push("별도");
   if (u.fiscal_years?.length) filters.push("연도: " + u.fiscal_years.join(","));

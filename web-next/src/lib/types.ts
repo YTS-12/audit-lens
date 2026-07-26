@@ -8,13 +8,19 @@ export interface Understanding {
   fiscal_years?: (string | number)[];
   doc_types?: string[];
   expanded_queries?: string[];
-  _wics_auto?: { label: string; code: string; n: number };
+  _ind_auto?: { label: string; code: string; n: number };
   [k: string]: unknown;
 }
 
-export interface WicsBrief {
-  dae?: string; jung?: string; so?: string;
-  code?: string; source?: string; confidence?: string; basis?: string;
+/** 자체 산업분류 라벨(다중) — 중요도(핵심/보조/노출)·산업관계·수행법인·근거 포함 */
+export interface IndustryLabel {
+  code?: string; cls1?: string; cls2?: string;
+  materiality?: string; rel?: string; entity?: string; basis?: string;
+}
+export interface IndustryBrief {
+  labels?: IndustryLabel[];
+  core?: string;            // 핵심 분류2 이름 나열("반도체 · 완제 전자·가전")
+  source?: string;          // "감사렌즈 자체 분류 v11"
 }
 
 export interface EvidenceItem {
@@ -30,7 +36,7 @@ export interface EvidenceItem {
   doc_type?: string;
   verified?: boolean;
   source?: string;          // 'ondemand' = 본문 추가 검색 배지
-  wics?: WicsBrief;
+  industry?: IndustryBrief;
   [k: string]: unknown;
 }
 
@@ -75,16 +81,16 @@ export interface MemChip { k: string; label: string }
 
 export interface FactPreset { label: string; question: string; fact_types?: string[]; group?: string }
 
-export interface WicsTaxonomy {
-  as_of?: string; source?: string;
-  dae: { code: string; name: string; jung: { code: string; name: string; so: { code: string; name: string }[] }[] }[];
+export interface IndustryTaxonomy {
+  as_of?: string; source?: string; version?: string;
+  cls1: { code: string; name: string; audit_focus?: string; sub: { code: string; name: string }[] }[];
 }
 
 export interface Meta {
   sectors?: string[];
   fact_years?: string[];
   fact_presets?: FactPreset[];
-  wics?: WicsTaxonomy;
+  industry?: IndustryTaxonomy;
 }
 
 export interface ChatMessage {

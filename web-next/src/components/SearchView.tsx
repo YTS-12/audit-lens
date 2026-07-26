@@ -37,7 +37,7 @@ export function SearchView({ meta, onGen, onToast, onLock, onBridge }: {
   onBridge: (seed: Seed) => Promise<void>;
 }) {
   const [q, setQ] = useState("");
-  const [wics, setWics] = useState({ dae: "", jung: "", so: "" });
+  const [ind, setInd] = useState({ cls1: "", cls2: "" });
   const [years, setYears] = useState<string[]>([]);   // 복수선택: "2023"/"2024"/"2025"/"검토"
   const filtersOpen = true;                    // 상세 조건 상시 펼침(사용자 요청으로 접이식 해제)
   const [stage, setStage] = useState<Stage | null>(null);
@@ -65,9 +65,8 @@ export function SearchView({ meta, onGen, onToast, onLock, onBridge }: {
     setStage({ items: [], tables: [], verified: 0, progress: "질문 이해하는 중…" });
 
     const payload: Record<string, unknown> = { question };
-    if (wics.dae) payload.wics_dae = wics.dae;
-    if (wics.jung) payload.wics_jung = wics.jung;
-    if (wics.so) payload.wics_so = wics.so;
+    if (ind.cls1) payload.ind_cls1 = ind.cls1;
+    if (ind.cls2) payload.ind_cls2 = ind.cls2;
     const ny = years.filter((y) => y !== "검토");
     if (ny.length) payload.years = ny;
     if (years.includes("검토")) payload.report = "검토";
@@ -131,7 +130,7 @@ export function SearchView({ meta, onGen, onToast, onLock, onBridge }: {
         setStage({ items: [], tables: [], verified: 0, error: ev.msg || "오류" });
       }
     }
-  }, [q, wics, years, onGen, onLock]);
+  }, [q, ind, years, onGen, onLock]);
 
   const bridge = async () => {
     if (!seedRef.current || bridging) return;
@@ -140,15 +139,14 @@ export function SearchView({ meta, onGen, onToast, onLock, onBridge }: {
     finally { setBridging(false); }
   };
 
-  const wicsList = meta.wics?.dae || [];
+  const indList = meta.industry?.cls1 || [];
   const selCls = "rounded-lg border border-line bg-white px-2 py-1.5 text-[12.5px] " +
     "w-full sm:w-auto sm:max-w-48 min-w-0";
 
   // 활성 조건 라벨(요약 배지용)
-  const wicsLabel = [
-    wicsList.find((d) => d.code === wics.dae)?.name,
-    wicsList.flatMap((d) => d.jung).find((j) => j.code === wics.jung)?.name,
-    wicsList.flatMap((d) => d.jung).flatMap((j) => j.so).find((s) => s.code === wics.so)?.name,
+  const indLabel = [
+    indList.find((c) => c.code === ind.cls1)?.name,
+    indList.flatMap((c) => c.sub).find((s) => s.code === ind.cls2)?.name,
   ].filter(Boolean).pop();
 
   // 프리셋 그룹핑(서버 group 필드, 없으면 기타)
@@ -189,11 +187,11 @@ export function SearchView({ meta, onGen, onToast, onLock, onBridge }: {
         <div className="w-full flex flex-wrap items-center gap-2 px-4 py-2.5 text-[12.5px]">
           <span className="font-semibold text-ink">상세 조건</span>
           <span className="text-ink-2 hidden sm:inline">업종·연도로 좁히기</span>
-          {wicsLabel && (
+          {indLabel && (
             <span className="rounded-full bg-green-soft text-green-deep px-2.5 py-0.5 inline-flex items-center gap-1.5">
-              업종: {wicsLabel}
+              업종: {indLabel}
               <i role="button" aria-label="업종 조건 해제" className="not-italic font-bold hover:text-danger"
-                onClick={(e) => { e.stopPropagation(); setWics({ dae: "", jung: "", so: "" }); }}>×</i>
+                onClick={(e) => { e.stopPropagation(); setInd({ cls1: "", cls2: "" }); }}>×</i>
             </span>
           )}
           {years.length > 0 && (
@@ -203,48 +201,35 @@ export function SearchView({ meta, onGen, onToast, onLock, onBridge }: {
                 onClick={(e) => { e.stopPropagation(); setYears([]); }}>×</i>
             </span>
           )}
-          {!wicsLabel && years.length === 0 && <span className="text-ink-2/70">현재: 전체 업종 · 전체 연도</span>}
+          {!indLabel && years.length === 0 && <span className="text-ink-2/70">현재: 전체 업종 · 전체 연도</span>}
         </div>
         {filtersOpen && (
           <div className="px-4 pb-3.5 border-t border-line/60 pt-3 space-y-2.5">
-            {/* 업종(WI26 3단) */}
+            {/* 업종(감사렌즈 자체 2단: 분류1 11 · 분류2 59 — 감사쟁점 유사성 기준) */}
             <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
-              <span className="text-ink-2 font-semibold w-full sm:w-auto">업종(WICS)</span>
-              <select className={selCls} value={wics.dae}
-                onChange={(e) => setWics({ dae: e.target.value, jung: "", so: "" })}>
-                <option value="">대분류 전체</option>
-                {wicsList.map((d) => <option key={d.code} value={d.code}>{d.name}</option>)}
+              <span className="text-ink-2 font-semibold w-full sm:w-auto">업종(자체 분류)</span>
+              <select className={selCls} value={ind.cls1}
+                onChange={(e) => setInd({ cls1: e.target.value, cls2: "" })}
+                title={indList.find((c) => c.code === ind.cls1)?.audit_focus || ""}>
+                <option value="">분류1 전체</option>
+                {indList.map((c) => <option key={c.code} value={c.code} title={c.audit_focus}>{c.name}</option>)}
               </select>
-              <select className={selCls} value={wics.jung}
+              <select className={selCls} value={ind.cls2}
                 onChange={(e) => {
                   const v = e.target.value;
-                  const dae = wicsList.find((d) => d.jung.some((j) => j.code === v))?.code || "";
-                  setWics({ dae: v ? dae : wics.dae, jung: v, so: "" });
+                  const c1 = indList.find((c) => c.sub.some((s) => s.code === v))?.code || "";
+                  setInd(v ? { cls1: c1, cls2: v } : { ...ind, cls2: "" });
                 }}>
-                <option value="">중분류 전체</option>
-                {wicsList.map((d) => (
-                  <optgroup key={d.code} label={d.name}>
-                    {d.jung.map((j) => <option key={j.code} value={j.code}>{j.name}</option>)}
-                  </optgroup>
-                ))}
-              </select>
-              <select className={selCls} value={wics.so}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  let dae = "", jung = "";
-                  for (const d of wicsList) for (const j of d.jung)
-                    if (j.so.some((s) => s.code === v)) { dae = d.code; jung = j.code; }
-                  setWics(v ? { dae, jung, so: v } : { ...wics, so: "" });
-                }}>
-                <option value="">소분류 전체</option>
-                {wicsList.map((d) => (
-                  <optgroup key={d.code} label={d.name}>
-                    {d.jung.flatMap((j) => j.so).map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
+                <option value="">분류2 전체</option>
+                {indList.map((c) => (
+                  <optgroup key={c.code} label={c.name}>
+                    {c.sub.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
                   </optgroup>
                 ))}
               </select>
               <span className="text-ink-2 text-[11px]">
-                {meta.wics?.source || "WICS"}{meta.wics?.as_of ? ` (${meta.wics.as_of})` : ""}
+                {meta.industry?.source || "감사렌즈 자체 산업분류"}
+                {meta.industry?.version ? ` ${meta.industry.version}` : ""}
               </span>
             </div>
             {/* 연도·보고서 */}

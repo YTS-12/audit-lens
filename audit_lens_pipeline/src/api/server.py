@@ -57,19 +57,18 @@ class QueryIn(BaseModel):
     report: str = ""           # UI 보고서: "" or "검토"(분·반기)
     fact_types: list[str] = [] # UI Fact 키워드 빠른조회(직접 지정)
     exhaustive: bool = False    # 빠른조회=전수 의도
-    wics_dae: str = ""          # WICS 대분류 코드(2자리)
-    wics_jung: str = ""         # WICS 중분류 코드(4자리)
-    wics_so: str = ""           # WICS 소분류 코드(6자리)
+    ind_cls1: str = ""          # 자체 산업분류 분류1 코드(영문 1자, A~K)
+    ind_cls2: str = ""          # 자체 산업분류 분류2 코드(영문+2자리, 예: B05)
 
 
 def _hints(p: "QueryIn") -> dict:
     return {"sector": p.sector, "year": p.year, "years": p.years, "report": p.report,
             "fact_types": p.fact_types, "exhaustive": p.exhaustive,
-            "wics": {"dae": p.wics_dae, "jung": p.wics_jung, "so": p.wics_so}}
+            "industry_sel": {"cls1": p.ind_cls1, "cls2": p.ind_cls2}}
 
 
 def _jsafe(obj: dict) -> dict:
-    """JSON 직렬화 안전화: understanding의 내부 set(_wics_corps 등)을 제거(원본 불변).
+    """JSON 직렬화 안전화: understanding의 내부 set(_ind_corps 등)을 제거(원본 불변).
     이 값들은 필터용 내부 상태라 클라이언트에 불필요 → 응답에서 제외."""
     u = obj.get("understanding")
     if isinstance(u, dict) and any(isinstance(v, (set, frozenset)) for v in u.values()):
@@ -78,14 +77,14 @@ def _jsafe(obj: dict) -> dict:
     return obj
 
 
-def _enrich_wics(res: dict) -> dict:
-    """결과 항목에 기업별 WICS 분류·출처·근거를 부착(UI 배지·툴팁용)."""
+def _enrich_industry(res: dict) -> dict:
+    """결과 항목에 기업별 자체 산업분류 라벨(다중·중요도·근거)을 부착(UI 배지·툴팁용)."""
     try:
-        from src.clients import wics as _wics
+        from src.clients import industry as _ind
         for it in res.get("items", []):
-            b = _wics.brief(it.get("corp_code"), it.get("corp_name", ""))
+            b = _ind.brief(it.get("corp_code"), it.get("corp_name", ""))
             if b:
-                it["wics"] = b
+                it["industry"] = b
     except Exception:  # noqa: BLE001
         pass
     return res
@@ -151,15 +150,15 @@ def meta():
         pass
     if not fact_years:
         fact_years = [2024, 2025]                  # 폴백(현재 적재 기준)
-    wics = {}
+    ind = {}
     try:
-        from src.clients import wics as _wics
-        wics = _wics.taxonomy_ui()
+        from src.clients import industry as _ind
+        ind = _ind.taxonomy_ui()
     except Exception:  # noqa: BLE001
         pass
     return {"sectors": sectors, "years": ["2023", "2024", "2025"],
             "fact_years": [str(y) for y in fact_years], "fact_presets": FACT_PRESETS,
-            "wics": wics}
+            "industry": ind}
 
 
 @app.get("/api/deeplink", dependencies=[Depends(require_auth)])
@@ -509,7 +508,7 @@ def api_chat_stream(payload: ChatIn, request: Request):
             u_last: dict = {}
             for ev in eng.run_stream(resolved, k=12):
                 if ev.get("type") in ("core", "supplement"):
-                    _enrich_wics(ev)
+                    _enrich_industry(ev)
                     final["items"] += ev.get("items") or []
                     final["tables"] += ev.get("tables") or []
                     final["verified_count"] += ev.get("verified_count") or 0
@@ -558,7 +557,7 @@ def api_query(payload: QueryIn, request: Request):
         raise HTTPException(400, "질문이 비어 있습니다.")
     ip = request.client.host if request.client else "?"
     try:
-        res = _jsafe(_enrich_wics(eng.run(q, k=payload.k, hints=_hints(payload))))
+        res = _jsafe(_enrich_industry(eng.run(q, k=payload.k, hints=_hints(payload))))
         _audit.info("ip=%s path=%s items=%d q=%r", ip, res.get("path"),
                     len(res.get("items", [])), q[:200])
         return res
@@ -584,7 +583,7 @@ def api_query_stream(payload: QueryIn, request: Request):
         try:
             for ev in eng.run_stream(q, k=payload.k, hints=_hints(payload)):
                 if ev.get("type") in ("core", "supplement"):
-                    _enrich_wics(ev)                  # 항목에 WICS 분류·출처·근거 부착
+                    _enrich_industry(ev)              # 항목에 자체 산업분류 라벨 부착
                     n_items += len(ev.get("items", []))
                 if ev.get("path"):
                     path = ev["path"]

@@ -55,7 +55,7 @@ def _build_filters(u: dict) -> dict:
         f["assurance"] = u["assurance"]
     if u.get("report_period") in ("연차", "분기", "반기"):
         f["period_type"] = u["report_period"]
-    wc = u.get("_wics_corps")              # WICS(UI) 명시 스코프 — 유사도 질의에도 적용
+    wc = u.get("_ind_corps")               # 자체 산업분류(UI) 명시 스코프 — 유사도 질의에도 적용
     if u.get("_similarity"):               # 유사도 질의: 회사/산업 필터 제거 → 순수 의미검색(참조기업은 검색어에 포함)
         if wc:
             f["corp_code"] = list(wc)
@@ -74,17 +74,17 @@ def _build_filters(u: dict) -> dict:
                              or (r.get("krx_sector") or "") in ind)]
         if codes:
             f["corp_code"] = codes
-    if wc:                                 # WICS ∩ (회사/산업). 명시 선택이므로 교집합 적용.
+    if wc:                                 # 산업분류 ∩ (회사/산업). 명시 선택이므로 교집합 적용.
         base = f.get("corp_code")
         f["corp_code"] = [c for c in base if c in wc] if base else list(wc)
     return f
 
 
 def _corp_codes(u: dict) -> list | None:
-    """산업/기업 → corp_code 목록(없으면 None=전체). WICS(UI 선택)가 있으면 교집합.
+    """산업/기업 → corp_code 목록(없으면 None=전체). 산업분류(UI 선택)가 있으면 교집합.
     업종은 온톨로지 정확 sector 우선(substring 탈피)."""
-    wc = u.get("_wics_corps")
-    def _ret(codes):                           # WICS 교집합 적용
+    wc = u.get("_ind_corps")
+    def _ret(codes):                           # 산업분류 교집합 적용
         if wc is None:
             return codes or None
         if codes is None:
@@ -345,22 +345,24 @@ def _rows_to_lines(rows: list[dict]) -> list[dict]:
 
 
 def _roster(items: list[dict]) -> str:
-    """다기업 결과 요약 — 전체 원문 프로즈 대신 '기업명 · 산업 · 개수' 로스터(WICS 대분류별)."""
-    from src.clients import wics as _wics
+    """다기업 결과 요약 — 전체 원문 프로즈 대신 '기업명 · 산업 · 개수' 로스터(분류1별).
+    분류1은 핵심 라벨(첫 번째) 기준: 다중 라벨 기업은 본업 하나로 묶는다."""
+    from src.clients import industry as _ind
     from collections import OrderedDict, defaultdict
     corps = OrderedDict()
     for it in items:
         nm = it.get("corp_name")
         if not nm or nm in corps:
             continue
-        b = _wics.brief(it.get("corp_code"), nm) or {}
-        corps[nm] = (b.get("dae") or "미분류", b.get("so") or "")
+        b = _ind.brief(it.get("corp_code"), nm) or {}
+        labs = b.get("labels") or []
+        corps[nm] = (labs[0]["cls1"] if labs else "미분류", b.get("core") or "")
     if not corps:
         return ""
     groups = defaultdict(list)
     for nm, (dae, so) in corps.items():
         groups[dae].append(nm)
-    parts = [f"조건에 해당하는 기업은 총 {len(corps)}개사입니다. WICS 산업 대분류별 분포는 다음과 같습니다."]
+    parts = [f"조건에 해당하는 기업은 총 {len(corps)}개사입니다. 산업 분류1별 분포는 다음과 같습니다."]
     for dae, names in sorted(groups.items(), key=lambda x: -len(x[1])):
         shown = ", ".join(names[:20]) + (f" 외 {len(names) - 20}개사" if len(names) > 20 else "")
         parts.append(f"· {dae} ({len(names)}개): {shown}")
@@ -514,25 +516,26 @@ class QueryEngine:
     def _apply_ontology(self, u: dict, question: str) -> dict:
         """질의이해 출력 정규화(온톨로지): 업종 정확화·부정 집합·값 동의어 확장."""
         u["_sector"] = self.onto.resolve_sector(u.get("industry"))
-        # WICS 자동 인식: 질문 속 업종을 WICS 계층으로도 해석.
-        # - KRX 미매치(조선·자동차부품·반도체·게임 등) → WICS 단독 스코프(신규 능력)
-        # - KRX 매치했지만 WICS 라벨이 더 정밀(예: 운송장비·부품 → 조선) → 교집합으로 좁힘
+        # 자체 산업분류 자동 인식: 질문 속 업종을 우리 분류1·분류2로 해석.
+        # - KRX 미매치(조선·자동차부품·반도체·게임 등) → 자체 분류 단독 스코프
+        # - KRX 매치했지만 자체 라벨이 더 정밀(예: 운송장비·부품 → 조선) → 자체 분류 적용
         # - 라벨 동일(건설=건설 등) → 기존 KRX 동작 유지(골든셋 무회귀). UI 명시 선택은 항상 우선.
-        if u.get("industry") and not u.get("_wics_corps"):
-            from src.clients import wics as _wics
-            hit = _wics.resolve_industry(u["industry"])
+        # 스코프는 핵심+보조 라벨만: 철강을 '취급'하는 상사는 철강 검색에 안 섞인다.
+        if u.get("industry") and not u.get("_ind_corps"):
+            from src.clients import industry as _ind
+            hit = _ind.resolve_industry(u["industry"])
             if hit:
                 codes, label, wcode = hit
                 sec = u.get("_sector") or ""
                 ln = label.replace(" ", "").replace("·", "")
                 sn = sec.replace(" ", "").replace("·", "")
-                # 동일 개념 판정(양방향 포함): 유통↔소매(유통), 철강↔철강금속, 통신↔전기통신 등
-                # → KRX(골든셋 검증) 유지. 진짜 더 정밀할 때만(조선⊄운송장비부품) WICS 적용.
+                # 동일 개념 판정(양방향 포함): 유통↔소매(유통), 철강↔철강금속 등
+                # → KRX(골든셋 검증) 유지. 진짜 더 정밀할 때만 자체 분류 적용.
                 same = bool(sn) and (ln in sn or sn in ln)
                 if not sec or not same:
-                    u["_wics_corps"] = codes
-                    u["_wics_auto"] = {"label": label, "code": wcode, "n": len(codes)}
-                    log.info("업종 WICS 자동 인식: '%s' → %s(%s) %d사%s",
+                    u["_ind_corps"] = codes
+                    u["_ind_auto"] = {"label": label, "code": wcode, "n": len(codes)}
+                    log.info("업종 자체분류 자동 인식: '%s' → %s(%s) %d사%s",
                              u["industry"], label, wcode, len(codes),
                              f" (KRX {sec} ∩)" if sec else "")
         exc = list(u.get("screening_detail_excludes") or [])
@@ -579,11 +582,11 @@ class QueryEngine:
             u["intent"] = "스크리닝"
         if hints.get("exhaustive"):
             u["_force_exhaustive"] = True         # UI 빠른조회=전수 의도 명시 → Fact Store 라우팅
-        w = hints.get("wics") or {}               # WICS 대/중/소 선택 → 해당 corp_code 집합으로 스코프
-        if w.get("dae") or w.get("jung") or w.get("so"):
-            from src.clients import wics as _wics
-            u["_wics_corps"] = _wics.corp_codes_for(w.get("dae", ""), w.get("jung", ""), w.get("so", ""))
-            u["_wics_sel"] = w
+        w = hints.get("industry_sel") or {}       # 분류1/분류2 선택 → 해당 corp_code 집합으로 스코프
+        if w.get("cls1") or w.get("cls2"):
+            from src.clients import industry as _ind
+            u["_ind_corps"] = _ind.corp_codes_for(w.get("cls1", ""), w.get("cls2", ""))
+            u["_ind_sel"] = w
         return u
 
     def _fact_years_cached(self) -> set:
