@@ -38,6 +38,7 @@ export function SearchView({ meta, onGen, onToast, onLock, onBridge }: {
 }) {
   const [q, setQ] = useState("");
   const [ind, setInd] = useState({ cls1: "", cls2: "" });
+  const [showSec, setShowSec] = useState(false);   // 부수 사업 기업 섹션 펼침 여부
   const [years, setYears] = useState<string[]>([]);   // 복수선택: "2023"/"2024"/"2025"/"검토"
   const filtersOpen = true;                    // 상세 조건 상시 펼침(사용자 요청으로 접이식 해제)
   const [stage, setStage] = useState<Stage | null>(null);
@@ -61,6 +62,7 @@ export function SearchView({ meta, onGen, onToast, onLock, onBridge }: {
     const ac = new AbortController();
     abortRef.current = ac;
     seedRef.current = null;
+    setShowSec(false);
     onGen("질문 이해하는 중…");
     setStage({ items: [], tables: [], verified: 0, progress: "질문 이해하는 중…" });
 
@@ -303,16 +305,69 @@ export function SearchView({ meta, onGen, onToast, onLock, onBridge }: {
               verified={stage.verified} total={stage.items.length} insufficient={stage.insufficient} />
           )}
           <FinTables tables={stage.tables} />
-          <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3 items-start">
-            {stage.items.map((it, i) => (
+          {(() => {
+            // ── 업종 필터 활성 시 결과를 '핵심 사업'과 '부수 사업'으로 계층화 ──
+            // 다중 라벨 기업(예: 포장재를 부수 사업으로 하는 풍산홀딩스)이 첫 화면에
+            // 섞이면 분류가 틀린 것처럼 보인다. 핵심만 기본 노출하고 나머지는 펼침으로.
+            const selCode = ind.cls2 || ind.cls1 || (stage.understanding?._ind_auto?.code ?? "");
+            const selKeys = selCode.split("+").filter(Boolean);
+            const tierOf = (it: EvidenceItem) => {
+              const m = (it.industry?.labels || []).find((l) =>
+                selKeys.some((k) => (k.length === 1 ? l.code?.[0] === k : l.code === k)));
+              return m?.materiality;
+            };
+            const grouping = selKeys.length > 0
+              && stage.items.some((it) => (it.industry?.labels || []).length > 0);
+            const coreItems = grouping ? stage.items.filter((it) => tierOf(it) === "핵심") : stage.items;
+            const secItems = grouping ? stage.items.filter((it) => tierOf(it) !== "핵심") : [];
+            const secOpen = showSec || coreItems.length === 0;   // 핵심이 없으면 자동 펼침
+            const indName = indLabel || stage.understanding?._ind_auto?.label || "선택 업종";
+            // 카드는 기업×연도 단위이므로, 요약 카운트는 기업 수로 센다
+            const nCore = new Set(coreItems.map((x) => x.corp_name)).size;
+            const nSec = new Set(secItems.map((x) => x.corp_name)).size;
+            const card = (it: EvidenceItem, i: number) => (
               <EvidenceCard key={`${it.corp_code}-${i}`} it={it}
                 lastQ={lastQRef.current} lastPath={lastPathRef.current} onToast={onToast}
-                selCode={ind.cls2 || ind.cls1 || (stage.understanding?._ind_auto?.code ?? "")} />
-            ))}
-            {!stage.items.length && !stage.progress && (
-              <Empty big="조건에 맞는 결과를 찾지 못했습니다" />
-            )}
-          </div>
+                selCode={selCode} />
+            );
+            return (
+              <>
+                {grouping && secItems.length > 0 && (
+                  <div className="text-[12.5px] text-ink-2 mb-2">
+                    <b className="text-green-deep">&lsquo;{indName}&rsquo;</b> 핵심 사업 기업{" "}
+                    <b className="text-ink">{nCore}개사</b>
+                    <span className="mx-1.5 text-line">|</span>
+                    부수 사업 영위 기업 {nSec}개사
+                  </div>
+                )}
+                <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3 items-start">
+                  {coreItems.map(card)}
+                  {!stage.items.length && !stage.progress && (
+                    <Empty big="조건에 맞는 결과를 찾지 못했습니다" />
+                  )}
+                </div>
+                {grouping && secItems.length > 0 && !secOpen && (
+                  <button onClick={() => setShowSec(true)}
+                    className="w-full mt-3 rounded-xl border border-dashed border-line bg-white py-2.5
+                               text-[12.5px] text-ink-2 hover:border-green hover:text-green-deep">
+                    ▼ &lsquo;{indName}&rsquo;를 부수 사업으로 영위하는 기업 {nSec}개사 보기
+                  </button>
+                )}
+                {grouping && secItems.length > 0 && secOpen && (
+                  <>
+                    <div className="flex items-center gap-2.5 mt-4 mb-2 text-[12px] text-ink-2">
+                      <span className="h-px flex-1 bg-line" />
+                      &lsquo;{indName}&rsquo; 부수 사업 영위 기업 · {nSec}개사
+                      <span className="h-px flex-1 bg-line" />
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3 items-start">
+                      {secItems.map(card)}
+                    </div>
+                  </>
+                )}
+              </>
+            );
+          })()}
           {stage.progress && (
             <div className="py-4 px-2"><Spinner label={stage.progress} /></div>
           )}
