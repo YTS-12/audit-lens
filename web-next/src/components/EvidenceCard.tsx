@@ -27,8 +27,9 @@ function HighlightedCtx({ ctx, quote }: { ctx: string; quote: string }) {
   return <>{ctx}</>;
 }
 
-export function EvidenceCard({ it, lastQ, lastPath, onToast }: {
+export function EvidenceCard({ it, lastQ, lastPath, onToast, selCode }: {
   it: EvidenceItem; lastQ: string; lastPath: string; onToast: (html: React.ReactNode) => void;
+  selCode?: string;   // 활성 업종 필터 코드(분류1 1자 또는 분류2 3자) — 매칭 라벨을 배지로 노출
 }) {
   const [ctxOpen, setCtxOpen] = useState(false);
   const [fbSent, setFbSent] = useState<"" | "up" | "down">("");
@@ -37,8 +38,18 @@ export function EvidenceCard({ it, lastQ, lastPath, onToast }: {
   const hasCtx = !!it.context && it.context.length > (it.quote || "").length + 20;
   const ind = it.industry;
   // 배지는 핵심 라벨만(최대 2개) — 보조·노출까지 붙이면 카드가 소란해진다. 전체는 툴팁으로.
-  const coreLabels = (ind?.labels || []).filter((l) => l.materiality === "핵심").slice(0, 2);
-  const indTip = (ind?.labels || [])
+  // 단, 업종 필터로 검색된 경우 그 필터와 일치하는 라벨은 반드시 맨 앞에 노출한다.
+  // (보조 라벨로 매칭된 다중 라벨 기업이 '다른 업종'처럼 보이는 착시 방지 — 예: 포장재 필터에
+  //  잡힌 풍산홀딩스는 핵심이 비철금속이라 포장재 배지가 없으면 무관해 보인다)
+  const allLabels = ind?.labels || [];
+  // selCode: 분류1 1자("B") · 분류2("B05") · 자동 인식 복합형("C01+C02") 모두 지원
+  const selKeys = (selCode || "").split("+").filter(Boolean);
+  const selMatch = selKeys.length
+    ? allLabels.find((l) => selKeys.some((k) => (k.length === 1 ? l.code?.[0] === k : l.code === k)))
+    : undefined;
+  const coreLabels = allLabels.filter((l) => l.materiality === "핵심" && l !== selMatch).slice(0, selMatch ? 1 : 2);
+  const shown = selMatch ? [selMatch, ...coreLabels] : coreLabels;
+  const indTip = allLabels
     .map((l) => `${l.cls2}[${l.materiality}${l.rel && l.rel !== "직접영위" ? "·" + l.rel : ""}]`)
     .join(" · ");
 
@@ -66,14 +77,18 @@ export function EvidenceCard({ it, lastQ, lastPath, onToast }: {
     <div className="rounded-xl border border-line bg-card p-4 shadow-sm">
       <div className="flex flex-wrap items-center gap-1.5 mb-2">
         <span className="font-bold text-[15px]">{it.corp_name}</span>
-        {coreLabels.map((l) => (
-          <span key={l.code} className="rounded bg-green-soft text-green-deep text-[11px] px-1.5 py-0.5"
-            title={`${l.cls1} › ${l.cls2} (${l.code}) — ${indTip}${l.basis ? `\n근거: ${l.basis}` : ""}`}>
-            {l.cls1} › {l.cls2}
+        {shown.map((l) => (
+          <span key={l.code}
+            className={`rounded text-[11px] px-1.5 py-0.5 ${l === selMatch
+              ? "bg-green text-white"
+              : "bg-green-soft text-green-deep"}`}
+            title={(l === selMatch ? `선택한 업종과 일치하는 라벨 (중요도: ${l.materiality})\n` : "")
+              + `${l.cls1} › ${l.cls2} (${l.code}) — ${indTip}${l.basis ? `\n근거: ${l.basis}` : ""}`}>
+            {l.cls1} › {l.cls2}{l === selMatch && l.materiality !== "핵심" ? ` · ${l.materiality}` : ""}
           </span>
         ))}
-        {coreLabels.length > 0 && (
-          <span className="rounded text-[11px] px-1.5 py-0.5 bg-green text-white"
+        {shown.length > 0 && (
+          <span className="rounded text-[11px] px-1.5 py-0.5 border border-line text-ink-2"
             title={`감사쟁점 유사성 기준 자체 분류 — 전체 라벨: ${indTip}`}>
             {ind?.source || "자체 분류"}
           </span>

@@ -306,7 +306,8 @@ export function SearchView({ meta, onGen, onToast, onLock, onBridge }: {
           <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3 items-start">
             {stage.items.map((it, i) => (
               <EvidenceCard key={`${it.corp_code}-${i}`} it={it}
-                lastQ={lastQRef.current} lastPath={lastPathRef.current} onToast={onToast} />
+                lastQ={lastQRef.current} lastPath={lastPathRef.current} onToast={onToast}
+                selCode={ind.cls2 || ind.cls1 || (stage.understanding?._ind_auto?.code ?? "")} />
             ))}
             {!stage.items.length && !stage.progress && (
               <Empty big="조건에 맞는 결과를 찾지 못했습니다" />
