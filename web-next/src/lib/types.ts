@@ -37,6 +37,10 @@ export interface EvidenceItem {
   verified?: boolean;
   source?: string;          // 'ondemand' = 본문 추가 검색 배지
   industry?: IndustryBrief;
+  /** 표 청크 인용의 표시용 텍스트(서버가 직렬화 메타로 결정적 생성).
+      검증·복사·DART 검색은 원본 quote/context 기준을 유지한다. */
+  quote_display?: string;
+  context_display?: string;
   [k: string]: unknown;
 }
 

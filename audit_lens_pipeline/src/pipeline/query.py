@@ -391,6 +391,19 @@ def _attach_source(it: dict, src: dict, ctx_max: int = 2500) -> None:
     """답변 항목에 출처 청크의 섹션 원문(context)과 DART 식별자를 부착.
     → 앱 내 '원문 보기'(하이라이트) + 섹션 딥링크(viewer.do) 재해소에 사용."""
     it["context"] = (src.get("text") or "")[:ctx_max]
+    # 표 청크면 표시용 필드를 추가한다(원본 quote·context는 검증 기준이므로 불변).
+    # 파이프 직렬화는 검색용 내부 표현이라 화면에 그대로 내보내지 않는다.
+    try:
+        from src.pipeline.table_display import display_quote, display_text, has_table
+        if has_table(it["context"]):
+            d = display_text(it["context"])
+            if d:
+                it["context_display"] = d
+            qd = display_quote(it.get("quote", ""), src.get("text") or "")
+            if qd:
+                it["quote_display"] = qd
+    except Exception:  # noqa: BLE001 — 표시 보강 실패는 원문 표시로 무해 강등
+        pass
     for f in ("rcept_no", "dcm_no", "note_no", "doc_type"):
         if src.get(f) is not None:
             it[f] = src.get(f)

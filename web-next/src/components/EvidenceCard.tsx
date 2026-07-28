@@ -27,6 +27,44 @@ function HighlightedCtx({ ctx, quote }: { ctx: string; quote: string }) {
   return <>{ctx}</>;
 }
 
+/** 표시용 텍스트(quote_display·context_display)의 구조화 렌더 — B안.
+    〔표: …〕 캡션·(단위: …)는 소제목으로, ▸ 행은 행 스타일로, 메타 헤더는 흐리게.
+    hl(인용 표시용)이 주어지면 인용에 포함된 행을 행 단위로 하이라이트한다. */
+function DisplayBlock({ text, hl }: { text: string; hl?: string }) {
+  const hlSet = new Set(
+    (hl || "").split("\n").map((l) => l.replace(/\s/g, "")).filter((l) => l.length > 3),
+  );
+  return (
+    <>
+      {text.split("\n").map((line, i) => {
+        const s = line.trim();
+        if (!s) return <div key={i} className="h-1.5" />;
+        if (s.startsWith("〔표:") || /^\(단위:.*\)$/.test(s)) {
+          return (
+            <div key={i} className="mt-2 first:mt-0 text-[11.5px] font-bold text-green-deep/90
+                                     border-l-2 border-green/40 pl-1.5">
+              {s.replace(/^〔표:\s*/, "").replace(/〕/, " ")}
+            </div>
+          );
+        }
+        if (i === 0 && s.startsWith("[") && s.endsWith("]")) {
+          return <div key={i} className="text-[11px] text-ink-2/70 mb-1">{s}</div>;
+        }
+        if (s.startsWith("▸")) {
+          const on = hlSet.has(line.replace(/\s/g, ""));
+          return (
+            <div key={i}
+              className={`pl-2 py-[1px] ${on ? "bg-yellow-100 rounded" : ""}`}>
+              {s}
+            </div>
+          );
+        }
+        return <div key={i}>{line}</div>;
+      })}
+    </>
+  );
+}
+
 export function EvidenceCard({ it, lastQ, lastPath, onToast, selCode }: {
   it: EvidenceItem; lastQ: string; lastPath: string; onToast: (html: React.ReactNode) => void;
   selCode?: string;   // 활성 업종 필터 코드(분류1 1자 또는 분류2 3자) — 매칭 라벨을 배지로 노출
@@ -106,7 +144,9 @@ export function EvidenceCard({ it, lastQ, lastPath, onToast, selCode }: {
       <div className="font-semibold text-[14px] mb-1.5">{it.conclusion}</div>
       {it.quote && (
         <div className="text-[13px] text-ink-2 leading-relaxed bg-bg rounded-lg p-2.5 whitespace-pre-line">
-          {it.quote}
+          {/* 표 청크 인용은 서버가 만든 표시용 텍스트(quote_display)를 구조화 렌더 —
+              검증·복사·DART 검색은 원본 quote 기준 그대로 유지 */}
+          {it.quote_display ? <DisplayBlock text={it.quote_display} /> : it.quote}
         </div>
       )}
       {hasCtx && (
@@ -117,7 +157,10 @@ export function EvidenceCard({ it, lastQ, lastPath, onToast, selCode }: {
           </button>
           {ctxOpen && (
             <div className="mt-1.5 text-[12.5px] leading-relaxed border border-line rounded-lg p-3 max-h-72 overflow-y-auto whitespace-pre-line">
-              <HighlightedCtx ctx={it.context || ""} quote={it.quote || ""} />
+              {/* 표시용이 있으면 구조화 렌더(행 단위 하이라이트), 없으면 원본 하이라이트 */}
+              {it.context_display
+                ? <DisplayBlock text={it.context_display} hl={it.quote_display || ""} />
+                : <HighlightedCtx ctx={it.context || ""} quote={it.quote || ""} />}
             </div>
           )}
         </div>
