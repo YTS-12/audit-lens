@@ -148,7 +148,8 @@ def main():
     elif args.cmd == "embed":
         from src.pipeline import embed
         embed.run(limit=args.limit, sector=args.sector, corp=args.corp,
-                  recreate=args.recreate, missing_only=args.missing_only)
+                  recreate=args.recreate, missing_only=args.missing_only,
+                  src_subdir="parsed_v2")   # 서빙 세대 명시 — 기본값 변경과 이중 안전판
     elif args.cmd == "extract":
         from src.pipeline import extract
         if args.batch:

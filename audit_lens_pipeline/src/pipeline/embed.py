@@ -75,8 +75,12 @@ def _chunk_files(corp: str | None, sector: str | None, src_subdir: str = "parsed
 
 def run(limit: int | None = None, sector: str | None = None, corp: str | None = None,
         recreate: bool = False, index_batch: int = 2000, missing_only: bool = False,
-        src_subdir: str = "parsed", index: str | None = None):
-    """src_subdir/index 오버라이드: 파서 v2 병행 인덱스(audit_chunks_v2) 구축용 — v1 무중단."""
+        src_subdir: str = "parsed_v2", index: str | None = None):
+    """기본 소스는 parsed_v2(서빙 인덱스와 동일 세대).
+
+    ⚠️ 기본값이 "parsed"(v1)였던 시절, 인자 없는 `cli embed` 실행이 v1 청크를
+    v2 인덱스에 섞을 수 있었다(무음 오염). v1 청크 재색인이 필요하면 src_subdir와
+    index를 모두 명시적으로 지정할 것 — 소스와 인덱스 세대는 항상 함께 움직여야 한다."""
     store = OpenSearchStore(index=index)
     if not store.ping():
         raise SystemExit(f"OpenSearch 연결 실패 ({store.host}:{store.port}) — "
