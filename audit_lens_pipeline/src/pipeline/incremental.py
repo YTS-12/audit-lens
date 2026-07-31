@@ -155,6 +155,15 @@ def run(days_back: int = 7, dry_run: bool = False, skip_llm: bool = False):
                 store.client.delete_by_query(index=store.index, body={
                     "query": {"term": {"rcept_no": old}}}, params={"refresh": "true"})
                 log.info("정정 교체: %s 옛 청크 삭제(rcept=%s)", r["corp_name"], old)
+                # 옛 산출물 파일도 함께 제거 — 남겨두면 다음 증분의 missing_only 임베딩이
+                # 방금 지운 청크를 파일에서 되살린다(좀비 재색인). 원문 보존은 DART가 원본.
+                for sub in ("parsed_v2", "parsed"):
+                    fp = settings.data_dir / settings.pipeline_version / sub / cc / f"{old}.jsonl"
+                    if fp.exists():
+                        fp.unlink()
+                zp_old = settings.raw_dir / cc / f"{old}.zip"
+                if zp_old.exists():
+                    zp_old.unlink()
             if olds:                                    # 옛 Fact는 보관함으로 이동(정정 이력 보존) 후 삭제
                 from src.clients.postgres import PostgresStore
                 with PostgresStore().conn.cursor() as cur:

@@ -98,6 +98,8 @@ def run(limit: int | None = None, sector: str | None = None, corp: str | None = 
 
     buf: list[dict] = []
     n = ok = err = fdone = skipped = 0
+    expected: dict[str, int] = {}       # rcept_no → 파일 행수(색인 후 자동 대조용)
+    dup_files = 0                       # 파일 내 문서 ID 충돌(=덮어쓰기 유실) 감지 수
 
     def flush():
         nonlocal ok, err
@@ -112,8 +114,14 @@ def run(limit: int | None = None, sector: str | None = None, corp: str | None = 
     stop = False
     for path in files:
         chunks = [json.loads(ln) for ln in path.open(encoding="utf-8") if ln.strip()]
+        ids = [store.doc_id(c) for c in chunks]
+        if chunks:
+            expected[chunks[0].get("rcept_no", path.stem)] = len(chunks)
+            ndup = len(ids) - len(set(ids))
+            if ndup:                     # bulk가 같은 ID를 '성공'으로 덮어쓰므로 여기서만 잡힌다
+                dup_files += 1
+                log.error("문서 ID 충돌 %d건 — %s (chunk_ix 중복: 색인 시 덮어쓰기 유실)", ndup, path)
         if missing_only and chunks:
-            ids = [store.doc_id(c) for c in chunks]
             have = store.existing_ids(ids)
             kept = [c for c, i in zip(chunks, ids) if i not in have]
             skipped += len(chunks) - len(kept)
@@ -135,6 +143,18 @@ def run(limit: int | None = None, sector: str | None = None, corp: str | None = 
             break
     flush()
     store.refresh()
+    # 색인 후 자동 대조(안전판): 보고서별 '파일 행수 = 인덱스 문서수'가 항상 성립해야 한다.
+    # limit 실행은 파일을 중간 절단하므로 대조 제외. 불일치는 무음 유실·스테일 잔존의 신호.
+    mismatch = 0
+    if limit is None:
+        for rc, exp in expected.items():
+            got = int(store.client.count(index=store.index, body={
+                "query": {"term": {"rcept_no": rc}}}).get("count", 0))
+            if got != exp:
+                mismatch += 1
+                log.error("색인 검증 불일치: rcept=%s 파일행수=%d 색인=%d", rc, exp, got)
+        log.info("[embed] 색인 검증: 보고서 %d건 대조 · 불일치 %d · ID충돌 파일 %d",
+                 len(expected), mismatch, dup_files)
     log.info("[embed] 완료: 파일 %d · 신규청크 %d · 색인 ok=%d err=%d · 기존 %d · index count=%d",
              fdone, n, ok, err, skipped, store.count())
     return n, ok, err

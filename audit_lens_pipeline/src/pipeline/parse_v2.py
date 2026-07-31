@@ -226,6 +226,21 @@ def _make_chunks_v2(meta, path_list, blocks, is_cons, doc_type):
     return out
 
 
+def _renumber_chunk_ix(chunks: list[dict]) -> list[dict]:
+    """색인 문서 ID가 (rcept_no|doc_type|section_path|chunk_ix)라서 이 4-튜플이 보고서 안에서
+    유일해야 한다. 그런데 _make_chunks_v2는 호출 단위로 chunk_ix를 0부터 매기므로, 같은
+    section_path로 여러 번 호출되면(하위 제목이 빈 문자열이라 경로에서 탈락, 동일 제목 반복 등)
+    ID가 충돌해 색인 시 마지막 청크만 살아남는 무음 유실이 생긴다(2026-07-31 전수 스캔:
+    150개 보고서 1,541청크). 보고서 전체에서 (doc_type, section_path)별 연속 번호로 재부여해
+    유일성을 보장한다 — 충돌 없던 섹션은 기존 번호가 그대로 유지된다(문서 순서 보존)."""
+    seen: dict[tuple, int] = {}
+    for c in chunks:
+        k = (c["doc_type"], c["section_path"])
+        c["chunk_ix"] = seen.get(k, 0)
+        seen[k] = c["chunk_ix"] + 1
+    return chunks
+
+
 # ── 보고서 처리(섹션 탐색은 v1과 동일 기준) ──
 def _parse_financial_sections(main, meta):
     chunks = []
@@ -289,7 +304,7 @@ def parse_report_v2(zip_path, meta):
         is_audit, is_cons = _classify_audit(root)
         if is_audit:
             chunks += _parse_audit(root, meta, is_cons)
-    return chunks
+    return _renumber_chunk_ix(chunks)
 
 
 def run(limit: int | None = None, corp: str | None = None, corps: set | None = None):
