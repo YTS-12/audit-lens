@@ -133,11 +133,18 @@ def display_quote(quote: str, chunk_text: str) -> str | None:
     if not quote or not has_table(chunk_text) or "|" not in quote:
         return None
     qn = re.sub(r"\s", "", quote)
+    # 인용 줄들도 따로 보관 — 세대 차이로 셀 수가 다를 때 역방향 포함으로 매칭한다.
+    # (Fact 근거문은 v1 파서 산출물이고 색인 청크는 v2라, v2가 병합 셀을 펼쳐
+    #  앞쪽 셀이 더 붙는 경우가 있다: v1 '지배기업|롯데케미칼|…' ⊂ v2 '전체|특수관계자|지배기업|롯데케미칼|…')
+    q_lines = [ql for ql in (re.sub(r"\s", "", l).rstrip("|") for l in quote.split("\n"))
+               if len(ql) >= 12]
     out, matched = [], False
     for kind, line, header in _walk(chunk_text):
         # 행 끝의 빈 셀 파이프는 인용 시 흔히 탈락하므로 비교에서만 제거(원문 불변)
         ln = re.sub(r"\s", "", line).rstrip("|")
-        if not ln or ln not in qn:
+        if not ln:
+            continue
+        if ln not in qn and not any(ql in ln for ql in q_lines):
             continue
         if kind == "caption":
             out.append(line.strip())

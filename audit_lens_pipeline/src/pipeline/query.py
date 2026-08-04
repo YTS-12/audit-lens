@@ -406,33 +406,38 @@ def _attach_quote_display(it: dict) -> None:
 def _restore_table_headers(store, items: list, limit: int = 40) -> int:
     """Fact 계열 항목의 출처 청크를 되찾아 '머리행이 살아 있는' 표시 필드를 만든다(B안).
 
-    Fact 근거문에는 표 머리행이 없다(추출 시 LLM이 해당 행만 인용). 다행히 접수번호와
-    섹션 경로가 남아 있으므로, 그 주소로 원본 청크를 조회해 _attach_source를 태우면
+    Fact 근거문에는 표 머리행이 없다(추출 시 LLM이 해당 행만 인용). 접수번호는 남아 있으므로
+    같은 보고서 안에서 인용문을 탐침으로 원본 청크를 찾아 _attach_source를 태우면
     '구분: 지급보증 · 금액: 1,234'처럼 머리가 붙은 형태로 복원된다.
+    - ⚠️ 섹션 경로로는 매칭하지 않는다: Fact는 v1 파서, 색인은 v2 파서 산출물이라
+      경로 문자열이 서로 다르다(v2에는 '(연결)' 접미사 등). 내용으로 찾아야 한다.
     - 조회는 msearch 1회(항목 수만큼 왕복하지 않음), 대상은 파이프가 있는 항목만.
-    - 청크를 못 찾거나 인용이 어느 청크에도 없으면 그대로 둔다(이미 display_piped가
+    - 청크를 못 찾거나 인용이 어느 후보에도 없으면 그대로 둔다(이미 display_piped가
       파이프는 없앤 상태). 실패는 전부 무해 강등 — 답변 내용에는 영향이 없다.
     반환: 복원에 성공한 항목 수."""
     if not store:
         return 0
-    targets = [it for it in items[:limit]
-               if "|" in (it.get("quote") or "") and it.get("rcept_no") and it.get("section_path")]
+    targets = []
+    for it in items[:limit]:
+        if "|" not in (it.get("quote") or "") or not it.get("rcept_no"):
+            continue
+        # 탐침 = 인용의 첫 실질 행(표 한 행). 너무 길면 잘라 질의 비용을 낮춘다.
+        probe = next((l.strip() for l in it["quote"].split("\n") if len(l.strip()) >= 12), "")
+        if probe:
+            targets.append((it, probe[:160]))
     if not targets:
         return 0
     try:
-        chunks = store.chunks_by_section([(it["rcept_no"], it["section_path"]) for it in targets])
+        found = store.chunks_for_probes([(it["rcept_no"], p) for it, p in targets])
     except Exception:  # noqa: BLE001
         return 0
-    if not chunks:
+    if not found:
         return 0
     done = 0
-    for it in targets:
-        cands = chunks.get((it["rcept_no"], it["section_path"])) or []
-        qn = _norm(it.get("quote", ""))
-        # 인용의 첫 실질 행이 들어 있는 청크를 출처로 본다(부분 인용 대응)
-        head = next((_norm(l) for l in (it.get("quote") or "").split("\n")
-                     if len(_norm(l)) >= 12), qn[:60])
-        src = next((c for c in cands if head and head in _norm(c.get("text", ""))), None)
+    for it, probe in targets:
+        cands = found.get((it["rcept_no"], probe[:160])) or []
+        pn = _norm(probe)
+        src = next((c for c in cands if pn and pn in _norm(c.get("text", ""))), None)
         if src is None:
             continue
         _attach_source(it, src)

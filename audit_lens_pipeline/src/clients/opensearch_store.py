@@ -117,29 +117,31 @@ class OpenSearchStore:
         except Exception:
             return 0
 
-    def chunks_by_section(self, keys: list[tuple], per_key: int = 6) -> dict:
-        """(rcept_no, section_path) → 그 섹션의 청크 텍스트 목록. msearch 1회 왕복.
+    def chunks_for_probes(self, probes: list[tuple], per_probe: int = 5) -> dict:
+        """(rcept_no, 탐침문구) → 그 보고서에서 문구와 가장 비슷한 청크 목록. msearch 1회 왕복.
 
         Fact Store 계열 항목에 출처 청크를 되붙여(표 머리행 복원) 표시 품질을 맞추는 데 쓴다.
-        키가 없거나 조회 실패면 빈 dict — 호출부는 표시 보강을 건너뛰고 무해 강등한다."""
-        keys = [(r, s) for r, s in dict.fromkeys(keys) if r and s]
-        if not keys:
+        ⚠️ 섹션 경로로 매칭하지 않는다 — Fact는 v1 파서, 색인은 v2 파서 산출물이라
+        섹션 경로 문자열이 서로 달라 정확 매칭이 성립하지 않기 때문(2026-08 실측).
+        대신 인용문 자체를 탐침으로 삼아 같은 보고서 안에서 내용으로 찾는다.
+        조회 실패면 빈 dict — 호출부는 표시 보강을 건너뛰고 무해 강등한다."""
+        probes = [(r, p) for r, p in dict.fromkeys(probes) if r and p]
+        if not probes:
             return {}
         body = []
-        for rcept, sec in keys:
+        for rcept, probe in probes:
             body.append({"index": self.index})
-            body.append({"size": per_key, "_source": ["text", "section_path", "rcept_no",
-                                                     "dcm_no", "doc_type", "note_no",
-                                                     "corp_code", "corp_name", "dart_url"],
-                         "query": {"bool": {"must": [
-                             {"term": {"rcept_no": rcept}},
-                             {"term": {"section_path.raw": sec}}]}}})
+            body.append({"size": per_probe, "_source": ["text", "section_path", "rcept_no",
+                                                       "dcm_no", "doc_type", "note_no",
+                                                       "corp_code", "corp_name", "dart_url"],
+                         "query": {"bool": {"must": [{"term": {"rcept_no": rcept}},
+                                                     {"match": {"text": probe}}]}}})
         try:
             resp = self.client.msearch(body=body, request_timeout=20)
         except Exception:  # noqa: BLE001 — 표시 보강용이므로 실패해도 답변에 영향 없음
             return {}
         out = {}
-        for key, r in zip(keys, resp.get("responses", [])):
+        for key, r in zip(probes, resp.get("responses", [])):
             hits = ((r or {}).get("hits") or {}).get("hits") or []
             if hits:
                 out[key] = [h["_source"] for h in hits]
