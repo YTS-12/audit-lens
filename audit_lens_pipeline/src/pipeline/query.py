@@ -403,6 +403,43 @@ def _attach_quote_display(it: dict) -> None:
         pass
 
 
+def _restore_table_headers(store, items: list, limit: int = 40) -> int:
+    """Fact 계열 항목의 출처 청크를 되찾아 '머리행이 살아 있는' 표시 필드를 만든다(B안).
+
+    Fact 근거문에는 표 머리행이 없다(추출 시 LLM이 해당 행만 인용). 다행히 접수번호와
+    섹션 경로가 남아 있으므로, 그 주소로 원본 청크를 조회해 _attach_source를 태우면
+    '구분: 지급보증 · 금액: 1,234'처럼 머리가 붙은 형태로 복원된다.
+    - 조회는 msearch 1회(항목 수만큼 왕복하지 않음), 대상은 파이프가 있는 항목만.
+    - 청크를 못 찾거나 인용이 어느 청크에도 없으면 그대로 둔다(이미 display_piped가
+      파이프는 없앤 상태). 실패는 전부 무해 강등 — 답변 내용에는 영향이 없다.
+    반환: 복원에 성공한 항목 수."""
+    if not store:
+        return 0
+    targets = [it for it in items[:limit]
+               if "|" in (it.get("quote") or "") and it.get("rcept_no") and it.get("section_path")]
+    if not targets:
+        return 0
+    try:
+        chunks = store.chunks_by_section([(it["rcept_no"], it["section_path"]) for it in targets])
+    except Exception:  # noqa: BLE001
+        return 0
+    if not chunks:
+        return 0
+    done = 0
+    for it in targets:
+        cands = chunks.get((it["rcept_no"], it["section_path"])) or []
+        qn = _norm(it.get("quote", ""))
+        # 인용의 첫 실질 행이 들어 있는 청크를 출처로 본다(부분 인용 대응)
+        head = next((_norm(l) for l in (it.get("quote") or "").split("\n")
+                     if len(_norm(l)) >= 12), qn[:60])
+        src = next((c for c in cands if head and head in _norm(c.get("text", ""))), None)
+        if src is None:
+            continue
+        _attach_source(it, src)
+        done += 1
+    return done
+
+
 def _attach_source(it: dict, src: dict, ctx_max: int = 2500) -> None:
     """답변 항목에 출처 청크의 섹션 원문(context)과 DART 식별자를 부착.
     → 앱 내 '원문 보기'(하이라이트) + 섹션 딥링크(viewer.do) 재해소에 사용."""
@@ -1086,6 +1123,8 @@ class QueryEngine:
             })
             _attach_quote_display(items[-1])          # 표에서 뽑힌 근거문의 파이프 노출 방지
         n_corp = len(corp_set)
+        if _restore_table_headers(self.store, items):     # 표 근거문에 머리행 복원(B안)
+            log.info("표 머리행 복원: 출처 청크 조회로 표시 보강")
         verified_n = sum(1 for it in items if it["verified"])
         if dropped:
             log.info("부정('없음') 사실 %d건 제외", dropped)
@@ -1384,7 +1423,10 @@ class QueryEngine:
                 "fiscal_year": e.get("fiscal_year"), "is_consolidated": True,
                 "conclusion": f"특수관계자: {e['party_name']} ({rel}{('/' + txn) if txn else ''}){grp}",
                 "quote": (e.get("evidence") or "")[:300],
-                "section_path": "특수관계자 주석", "dart_url": e.get("dart_url") or "",
+                # 출처 청크 재조회(머리행 복원)를 위해 실제 섹션 경로·접수번호를 보존
+                "section_path": e.get("section_path") or "특수관계자 주석",
+                "rcept_no": e.get("rcept_no") or "",
+                "dart_url": e.get("dart_url") or "",
                 "verified": True, "fact_type": "특수관계자망",
             })
             _attach_quote_display(items[-1])          # 특수관계자 거래 내역은 대부분 표 근거문
@@ -1393,6 +1435,7 @@ class QueryEngine:
         if peers:
             pnames = [names.get(p["corp_code"], p["corp_code"]) for p in peers[:5]]
             note = f" · 상대·집단을 공유하는 기업 {len(peers)}개사(예: {', '.join(pnames)})"
+        _restore_table_headers(self.store, items)         # 표 근거문에 머리행 복원(B안)
         log.info("경로=지식그래프 특수관계자망(%s) · 엣지 %d · 피어 %d", u["company"], len(items), len(peers))
         return {"understanding": u,
                 "answer": f"{me}의 특수관계자 {len(items)}곳 (관계 분석){note}",

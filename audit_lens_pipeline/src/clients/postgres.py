@@ -530,8 +530,10 @@ class PostgresStore:
         """[1홉] 기업 X → X가 보고한 특수관계자(상대방) 목록."""
         with self.conn.cursor() as cur:
             cur.execute(
-                "SELECT party_name, relationship, txn_type, group_name, fiscal_year, dart_url, evidence "
-                "FROM (SELECT rp.*, f.evidence_text AS evidence FROM related_parties rp "
+                "SELECT party_name, relationship, txn_type, group_name, fiscal_year, dart_url, "
+                "evidence, rcept_no, section_path "
+                "FROM (SELECT rp.*, f.evidence_text AS evidence, f.section_path AS section_path "
+                "FROM related_parties rp "
                 "LEFT JOIN facts f ON f.fact_id=rp.fact_id WHERE rp.corp_code=%s) t "
                 "ORDER BY party_name LIMIT %s", (corp_code, int(limit)))
             cols = [d.name for d in cur.description]

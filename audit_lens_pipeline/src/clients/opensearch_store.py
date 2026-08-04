@@ -117,6 +117,34 @@ class OpenSearchStore:
         except Exception:
             return 0
 
+    def chunks_by_section(self, keys: list[tuple], per_key: int = 6) -> dict:
+        """(rcept_no, section_path) → 그 섹션의 청크 텍스트 목록. msearch 1회 왕복.
+
+        Fact Store 계열 항목에 출처 청크를 되붙여(표 머리행 복원) 표시 품질을 맞추는 데 쓴다.
+        키가 없거나 조회 실패면 빈 dict — 호출부는 표시 보강을 건너뛰고 무해 강등한다."""
+        keys = [(r, s) for r, s in dict.fromkeys(keys) if r and s]
+        if not keys:
+            return {}
+        body = []
+        for rcept, sec in keys:
+            body.append({"index": self.index})
+            body.append({"size": per_key, "_source": ["text", "section_path", "rcept_no",
+                                                     "dcm_no", "doc_type", "note_no",
+                                                     "corp_code", "corp_name", "dart_url"],
+                         "query": {"bool": {"must": [
+                             {"term": {"rcept_no": rcept}},
+                             {"term": {"section_path.raw": sec}}]}}})
+        try:
+            resp = self.client.msearch(body=body, request_timeout=20)
+        except Exception:  # noqa: BLE001 — 표시 보강용이므로 실패해도 답변에 영향 없음
+            return {}
+        out = {}
+        for key, r in zip(keys, resp.get("responses", [])):
+            hits = ((r or {}).get("hits") or {}).get("hits") or []
+            if hits:
+                out[key] = [h["_source"] for h in hits]
+        return out
+
     def existing_ids(self, ids: list[str]) -> set[str]:
         """주어진 doc_id 중 인덱스에 이미 있는 것(top-off용, _source 미반환)."""
         if not ids:
