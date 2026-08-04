@@ -98,6 +98,33 @@ def display_text(text: str) -> str | None:
     return "\n".join(out)
 
 
+def display_piped(text: str) -> str | None:
+    """출처 청크 없이 '텍스트 하나만으로' 하는 표시용 변환 — Fact 근거문 등에 사용.
+
+    Fact Store 계열 경로(전수 스크리닝·단일기업·감사인 그래프·특수관계자망)는 DB 행에서
+    항목을 만들므로 출처 청크가 없어 display_quote(청크 대조식)를 쓸 수 없다. 그런데
+    근거문(evidence_text)이 표에서 추출된 경우 파이프 직렬화가 그대로 화면에 노출된다.
+    이 함수가 그 빈틈을 메운다:
+      ① 우리 캡션 마커가 있으면 그 텍스트 자체가 자기완결 표 → display_text와 동일 처리.
+      ② 마커가 없고 파이프만 있으면 머리행을 알 수 없으므로 **셀 구분자만** 읽기 형태로
+         바꾼다(내용 불변·머리 추측 없음). 파이프는 검색용 내부 표현이라 화면에 내보내지 않는다.
+    변환할 것이 없으면 None → 호출부는 원문을 그대로 표시한다."""
+    t = text or ""
+    if has_table(t):
+        return display_text(t)
+    if "|" not in t:
+        return None
+    out = []
+    for line in t.split("\n"):
+        s = line.strip()
+        if "|" in s:
+            cells = [c.strip() for c in s.split("|") if c.strip()]
+            out.append(_ROW_MARK + " · ".join(cells) if cells else s)
+        else:
+            out.append(s)
+    return "\n".join(out)
+
+
 def display_quote(quote: str, chunk_text: str) -> str | None:
     """인용문(표 행의 부분집합)의 표시용 변환.
 

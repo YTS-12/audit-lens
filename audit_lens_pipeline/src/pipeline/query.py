@@ -387,6 +387,22 @@ def _find_source(quote: str, evidence: list[dict], ev_norm: list[str]):
     return None, False
 
 
+def _attach_quote_display(it: dict) -> None:
+    """출처 청크 없이 인용문만으로 표시용 필드 부착 — Fact Store 계열 경로 공용.
+
+    전수 스크리닝·단일기업·감사인 그래프·특수관계자망은 DB 행에서 항목을 만들어
+    _attach_source(청크 필요)를 탈 수 없다. 근거문이 표에서 추출된 경우 파이프
+    직렬화가 화면에 노출되던 문제(2026-08 발견)를 이 함수가 막는다.
+    원본 quote는 불변 — 인용 기계검증의 기준이기 때문."""
+    try:
+        from src.pipeline.table_display import display_piped
+        qd = display_piped(it.get("quote", ""))
+        if qd and qd != it.get("quote"):
+            it["quote_display"] = qd
+    except Exception:  # noqa: BLE001 — 표시 보강 실패는 원문 표시로 무해 강등
+        pass
+
+
 def _attach_source(it: dict, src: dict, ctx_max: int = 2500) -> None:
     """답변 항목에 출처 청크의 섹션 원문(context)과 DART 식별자를 부착.
     → 앱 내 '원문 보기'(하이라이트) + 섹션 딥링크(viewer.do) 재해소에 사용."""
@@ -402,6 +418,8 @@ def _attach_source(it: dict, src: dict, ctx_max: int = 2500) -> None:
             qd = display_quote(it.get("quote", ""), src.get("text") or "")
             if qd:
                 it["quote_display"] = qd
+        if not it.get("quote_display"):
+            _attach_quote_display(it)   # 청크 대조 실패(부분 인용 등) → 인용문 단독 변환으로 폴백
     except Exception:  # noqa: BLE001 — 표시 보강 실패는 원문 표시로 무해 강등
         pass
     for f in ("rcept_no", "dcm_no", "note_no", "doc_type"):
@@ -1066,6 +1084,7 @@ class QueryEngine:
                 "verified": r.get("confidence") == "ok",
                 "fact_type": r["fact_type"],
             })
+            _attach_quote_display(items[-1])          # 표에서 뽑힌 근거문의 파이프 노출 방지
         n_corp = len(corp_set)
         verified_n = sum(1 for it in items if it["verified"])
         if dropped:
@@ -1368,6 +1387,7 @@ class QueryEngine:
                 "section_path": "특수관계자 주석", "dart_url": e.get("dart_url") or "",
                 "verified": True, "fact_type": "특수관계자망",
             })
+            _attach_quote_display(items[-1])          # 특수관계자 거래 내역은 대부분 표 근거문
         peers = self.pg.related_party_peers(code)
         note = ""
         if peers:
